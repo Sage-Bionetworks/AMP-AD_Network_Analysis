@@ -29,6 +29,10 @@ anno = synGetAnnotations(bar2)
 #annotations
 synSetAnnotations(foo) = as.list(anno)
 
+
+permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
+                               repositoryPath = 'rosmapExpression.R')
+
 #provenance and store
 foo = synStore(foo,
                used = as.list(c('syn4922930',
