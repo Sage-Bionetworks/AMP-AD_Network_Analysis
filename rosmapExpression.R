@@ -31,6 +31,8 @@ synSetAnnotations(foo) = as.list(anno)
 
 
 permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
+                               ref = 'branch',
+                               refName = 'rosmap',
                                repositoryPath = 'rosmapExpression.R')
 
 #provenance and store
@@ -38,7 +40,7 @@ foo = synStore(foo,
                used = as.list(c('syn4922930',
                                 'syn4922926',
                                 'syn4922923')),
-               executed = as.list())
+               executed = as.list(c(permLink)))
 
 
 
