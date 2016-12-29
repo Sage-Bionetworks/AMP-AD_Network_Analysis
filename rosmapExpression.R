@@ -40,7 +40,9 @@ foo = synStore(foo,
                used = as.list(c('syn4922930',
                                 'syn4922926',
                                 'syn4922923')),
-               executed = as.list(c(permLink)))
+               executed = as.list(c(permLink)),
+               activityName = 'Format ROSMAP expression Data',
+               activityDescription = 'Add sample ids as row names and gene names as column names to expression data from ROSMAP processed by Chris')
 
 
 
