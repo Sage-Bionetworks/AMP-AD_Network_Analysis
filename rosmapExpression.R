@@ -20,10 +20,11 @@ geneKey <- exprData[,1:3]
 exprData <- exprData[,-c(1:3)]
 exprData <- t(exprData)
 colnames(exprData) <- geneKey$ensembl_gene_id
+exprData <- t(exprData)
 write.csv(exprData,file='ROSMAP_Expression.csv',quote=F)
 
 #version comment
-comment = "ROSMAP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds"
+comment = "ROSMAP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds with genes as rows"
 
 foo = File('ROSMAP_Expression.csv',parentId='syn7981630',versionComment = comment)
 
@@ -41,12 +42,10 @@ permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Ana
 
 #provenance and store
 foo = synStore(foo,
-               used = as.list(c('syn4922930',
-                                'syn4922926',
-                                'syn4922923')),
+               used = as.list(c('syn8018356')),
                executed = as.list(c(permLink)),
                activityName = 'Format ROSMAP expression Data',
-               activityDescription = 'Add sample ids as row names and gene names as column names to expression data from ROSMAP processed by Chris')
+               activityDescription = 'Push ROSMAP data into format for network pipeline')
 
 
 
