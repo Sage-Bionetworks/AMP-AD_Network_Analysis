@@ -38,17 +38,17 @@ geneKey <- exprData[,1:3]
 exprData <- exprData[,-c(1:3)]
 exprData <- t(exprData)
 colnames(exprData) <- geneKey$ensembl_gene_id
-
-tcxIds <- grep('TCX',rownames(exprData))
-cerIds <- grep('CER',rownames(exprData))
-exprDataTCX <- exprData[tcxIds,]
-exprDataCER <- exprData[cerIds,]
+exprData <- t(exprData)
+tcxIds <- grep('TCX',colnames(exprData))
+cerIds <- grep('CER',colnames(exprData))
+exprDataTCX <- exprData[,tcxIds]
+exprDataCER <- exprData[,cerIds]
 #exprData <- t(exprData)
 write.csv(exprDataTCX,file='MayoRNAseq_TCX.csv',quote=F)
 write.csv(exprDataCER,file='MayoRNAseq_CER.csv',quote=F)
 
 #version comment
-commentTCX = "Mayo RNAseq TCX expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds with genes as columns"
+commentTCX = "Mayo RNAseq TCX expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds with genes in the correct format for metanetwork as rows"
 
 foo = File('MayoRNAseq_TCX.csv',parentId=MayoTCXExpr@properties$id,versionComment = commentTCX)
 
@@ -61,7 +61,7 @@ synSetAnnotations(foo) = as.list(anno)
 
 permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
                                ref = 'branch',
-                               refName = 'mayo',
+                               refName = 'mayornaseq',
                                repositoryPath = 'mayoRNAseq.R')
 
 #provenance and store
@@ -75,7 +75,7 @@ foo = synStore(foo,
 
 
 #version comment
-commentCER = "Mayo RNAseq CER expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds with genes as columns"
+commentCER = "Mayo RNAseq CER expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds with genes in the correct format for metanetwork as rows"
 
 foo = File('MayoRNAseq_CER.csv',parentId=MayoCBEExpr@properties$id,versionComment = commentCER)
 
@@ -88,7 +88,7 @@ synSetAnnotations(foo) = as.list(anno)
 
 permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
                                ref = 'branch',
-                               refName = 'mayo',
+                               refName = 'mayornaseq',
                                repositoryPath = 'mayoRNAseq.R')
 
 #provenance and store
