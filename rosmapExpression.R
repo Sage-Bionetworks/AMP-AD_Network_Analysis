@@ -20,11 +20,12 @@ geneKey <- exprData[,1:3]
 exprData <- exprData[,-c(1:3)]
 exprData <- t(exprData)
 colnames(exprData) <- geneKey$ensembl_gene_id
-exprData <- t(exprData)
+#exprData <- t(exprData)
+exprData <- exprData[-which(duplicated(rownames(exprData))),]
 write.csv(exprData,file='ROSMAP_Expression.csv',quote=F)
 
 #version comment
-comment = "ROSMAP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds with genes as rows"
+comment = "ROSMAP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds with genes as rows in correct format (genes as rows, samples as columns), without duplicates row names"
 
 foo = File('ROSMAP_Expression.csv',parentId='syn7981630',versionComment = comment)
 
