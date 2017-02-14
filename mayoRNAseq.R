@@ -77,9 +77,9 @@ foo = synStore(foo,
 #version comment
 commentCER = "Mayo RNAseq CER expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds with genes as columns"
 
-foo = File('MayoRNAseq_CER.csv',parentId=MayoCERExpr@properties$id,versionComment = commentCER)
+foo = File('MayoRNAseq_CER.csv',parentId=MayoCBEExpr@properties$id,versionComment = commentCER)
 
-bar2 = synGet('syn4650265',downloadFile=F)
+bar2 = synGet('syn5201007',downloadFile=F)
 anno = synGetAnnotations(bar2)
 
 #annotations
