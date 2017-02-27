@@ -34,7 +34,7 @@ library(dplyr)
 
 fileNames <- paste0('Scaled_Winsorized_',foo$file.name)
 parentIds <- sapply(bar,function(x){return(x@properties$parentId)})
-annotationss <- sapply(bar,function(x){return(synGetAnnotations(x))})
+annotations <- sapply(bar,function(x){return(synGetAnnotations(x))})
 comments <- rep('Winsorizing and scaling',7)
 useds <- sapply(bar,function(x){return(x@properties$id)})
 
@@ -48,16 +48,17 @@ permLink1 =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_An
 permLink2 =githubr::getPermlink(repository = 'Sage-Bionetworks/rSynapseUtilities',
                                 ref = 'branch',
                                 refName = 'dev',
-                                repositoryPath = 'pushToSynapseWrapper.R')
+                                repositoryPath = 'R/pushToSynapseWrapper.R')
 
 permLink3 =githubr::getPermlink(repository = 'blogsdon/utilityFunctions',
                                 ref = 'branch',
                                 refName = 'master',
-                                repositoryPath = 'winsorize.R')
+                                repositoryPath = 'R/winsorize.R')
 
-
-
-executeds <- c(permLink1,permLink2,permLink3) %>% rep(7)
+executeds <- vector('list',7)
+for(i in 1:7){
+  executeds[[i]]<-as.list(c(permLink1,permLink2,permLink3))
+}
 
 activityNames <- rep('Post Process AMP-AD RNAseq data',7)
 
@@ -74,4 +75,3 @@ synObjs<-mapply(rSynapseUtilities::pushToSynapseWrapper,
        executedVector=executeds,
        activityName1=activityNames,
        activityDescription1=activityDescriptions)
-
