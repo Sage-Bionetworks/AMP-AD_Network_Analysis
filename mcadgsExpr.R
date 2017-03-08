@@ -134,6 +134,6 @@ pushToSynapseFxn <- function(exprMat,fileName,parentId,comment,annoId,usedId){
                  activityDescription = 'Push MCADGS Array Expression Data into format for network pipeline')
 }
 
-pushToSynapseFxn(exprDataCER,"MCADGS_CER.csv",MCADGS_CER_Manifest$exprFolder@properties$id,"MCADGS Cerebellum array expression data processed in the AMP-AD consortia, residualized for batch and technical confounds with genes in the correct format for metanetwork as rows with probe ids that map to multiple genes discarded and probes that mapped to the same gene averaged","syn3256501","syn5605698")
-pushToSynapseFxn(exprDataTCX,"MCADGS_TCX.csv",MCADGS_TCX_Manifest$exprFolder@properties$id,"MCADGS temporal cortex expression data processed in the AMP-AD consortia, residualized for batch and technical confounds with genes in the correct format for metanetwork as rows with probe ids that map to multiple genes discarded and probes that mapped to the same gene averaged","syn3617054","syn5605688")
+pushToSynapseFxn(exprDataCER,"MCADGS_CER.csv",MCADGS_CER_Manifest$exprFolder@properties$id,"MCADGS Cerebellum array expression data processed in the AMP-AD consortia with probe ids that map to multiple genes discarded and probes that mapped to the same gene averaged","syn3256501","syn5605698")
+pushToSynapseFxn(exprDataTCX,"MCADGS_TCX.csv",MCADGS_TCX_Manifest$exprFolder@properties$id,"MCADGS temporal cortex expression data processed in the AMP-AD consortia with probe ids that map to multiple genes discarded and probes that mapped to the same gene averaged","syn3617054","syn5605688")
 
