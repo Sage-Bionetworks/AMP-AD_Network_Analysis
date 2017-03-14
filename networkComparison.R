@@ -8,7 +8,9 @@ loadBic <- function(synId){
   synapseClient::synapseLogin()
   foo<-synapseClient::synGet(synId)
   load(foo@filePath)
-  return(bicNetworks$network)
+  net <- as.matrix(bicNetworks$network)
+  net <- net+t(net)
+  return(net)
 }
 
 ampNetworks <- lapply(bar$file.id,loadBic)
@@ -21,13 +23,23 @@ names(ampNetworks) <- c('rosmap',
                         'mssmIfg',
                         'mcadgsTCX',
                         'mcadgsCER')
+rownames(bar) <- names(ampNetworks)
+
+
+nedges <- sapply(ampNetworks,function(x) sum(x))
+bar$nedges <- nedges
 
 #methodManifest <- expand.grid(names(ampNetworks),names(ampNetworks))
 #methodManifest <- dplyr::filter(methodManifest,Var1!=Var2)
 library(dplyr)
 methodManifest <- combn(names(ampNetworks),2) %>% t
+colnames(methodManifest) <- c('network1','network2')
+methodManifest <- data.frame(methodManifest,
+                             stringsAsFactors=F)
+
 
 wrapperFxn <- function(method1,method2,allnets){
+  cat('method1:',method1,'method2:',method2,'\n')
   return(metanetwork::compareTwoNetworks(allnets[[method1]],allnets[[method2]]))
 }
 
@@ -41,17 +53,42 @@ networkCompare <- mapply(wrapperFxn,
 grabOddsRatios <- function(x){
   return(x[[1]]$estimate)
 }
+grabPvalue <- function(x){
+  return(x[[1]]$p.value)
+}
+getSynIds <- function(x,networkManifest){
+  return(networkManifest[x,'file.id'])
+}
+getNetwork1Overlap <- function(x){
+  return(x[[2]])
+}
+getNetwork2Overlap <- function(x){
+  return(x[[3]])
+}
+getNedges <- function(x,networkManifest){
+  return(networkManifest[x,'nedges'])
+}
+
 
 ors <- sapply(networkCompare,grabOddsRatios)
-colnames(methodManifest) <- c('network1','network2')
-methodManifest <- data.frame(methodManifest,
-                             stringsAsFactors = F)
+pvals <- sapply(networkCompare,grabPvalue)
+network1synId <- sapply(methodManifest$network1,getSynIds,bar)
+network2synId <- sapply(methodManifest$network2,getSynIds,bar)
+network1Overlap <- sapply(networkCompare,getNetwork1Overlap)
+network2Overlap <- sapply(networkCompare,getNetwork2Overlap)
+#colnames(methodManifest) <- c('network1','network2')
+#methodManifest <- data.frame(methodManifest,
+#                             stringsAsFactors = F)
 methodManifest$ors <- ors
+methodManifest$network1synId <- network1synId
+methodManifest$network2synId <- network2synId
+methodManifest$network1Overlap <- network1Overlap
+methodManifest$network2Overlap <- network2Overlap
+methodManifest$network1Nedges <- sapply(methodManifest$network1,getNedges,bar)
+methodManifest$network2Nedges <- sapply(methodManifest$network2,getNedges,bar)
 
-
-
-
-distMat <- tidyr::spread(methodManifest,
+methodManifest2 <- dplyr::select(methodManifest,network1,network2,ors)
+distMat <- tidyr::spread(methodManifest2,
                          network1,
                          ors)
 rownames(distMat) <- distMat$network2
@@ -86,7 +123,8 @@ makePcPlot <- function(svdecomp,i,j,nameVec){
        nameVec,
        col=wes_palette("Rushmore",7,type='continuous'))
 }
-makePcPlot(svd2,1,2,rownames(distMat))
+makePcPlot(svd2,4,5,rownames(distMat))
 #par(mar=c(12,4,6,6))
 pheatmap::pheatmap(distMat2)
+
 
