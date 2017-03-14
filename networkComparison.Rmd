@@ -146,7 +146,7 @@ permLink2 <- githubr::getPermlink(repository = 'Sage-Bionetworks/metanetwork',
                                refName = 'dev',
                                repositoryPath = 'R/compareTwoNetworks.R')
 
-permLink2 <- githubr::getPermlink(repository = 'Sage-Bionetworks/metanetwork',
+permLink2 <- githubr::getPermlink(repository = 'Sage-Bionetworks/rSynapseUtilities',
                                ref = 'branch',
                                refName = 'dev',
                                repositoryPath = 'R/pushToSynapseWrapper.R')
