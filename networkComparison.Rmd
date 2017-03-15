@@ -230,7 +230,9 @@ makePcPlot(svd2,1,2,rownames(distMat))
 #par(mar=c(12,4,6,6))
 
 ```
+
 next a heatmap of odds ratios of pairwise comparisons
+
 ```{r heatmap,echo=FALSE}
 pheatmap::pheatmap(distMat2)
 ```
