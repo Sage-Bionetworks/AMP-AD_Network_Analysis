@@ -29,11 +29,11 @@ synapseClient::synSetAnnotations(foo) = as.list(anno)
 
 permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
                                ref = 'branch',
-                               refName = 'rosmap',
+                               refName = 'rosmap-patch-1',
                                repositoryPath = 'rosmapExpression.R')
 
 #provenance and store
-foo = synStore(foo,
+foo = synapseClient::synStore(foo,
                used = as.list(c('syn8018356')),
                executed = as.list(c(permLink)),
                activityName = 'Format ROSMAP expression Data',
