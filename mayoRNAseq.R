@@ -46,7 +46,7 @@ permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Ana
 
 #provenance and store
 foo = synapseClient::synStore(foo,
-               used = as.list(c('syn8028570')),
+               used = as.list(c('syn8466826')),
                executed = as.list(c(permLink)),
                activityName = 'Format Mayo RNAseq TCX expression Data',
                activityDescription = 'Push Mayo RNAseq TCX data into format for network pipeline')
@@ -73,7 +73,7 @@ permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Ana
 
 #provenance and store
 foo = synapseClient::synStore(foo,
-               used = as.list(c('syn8028570')),
+               used = as.list(c('syn8466826')),
                executed = as.list(c(permLink)),
                activityName = 'Format Mayo RNAseq CER expression Data',
                activityDescription = 'Push Mayo RNAseq CER data into format for network pipeline')
