@@ -1,54 +1,14 @@
-library(synapseClient)
-library(githubr)
-synapseLogin()
-
-
-
 #steps: 
 #1) get rid of first 4 rows
 #2) split cerebellum and temporal cortex samples
 #3) ensure proper location for expression data and networks on Synapse done
 #4) make sure output is in proper format going forward
 
-exprDataObj <- synGet('syn8049659')
+exprDataObj <- synapseClient::synGet('syn8485027')
 #geneIdObj <- synGet('syn4922926')
 #sampleIdObj <- synGet('syn4922923')
 
-
-
-populateFolders <- function(synId){
-  objectsList <- list()
-  objectsList$exprFolder <- synapseClient::Folder(name="Expression Data",
-                                      parentId=synId)
-  objectsList$exprFolder <- synapseClient::synStore(objectsList$exprFolder)
-  objectsList$exprNetworks <- synapseClient::Folder(name="Expression Networks",
-                                        parentId=synId)
-  objectsList$exprNetworks <- synapseClient::synStore(objectsList$exprNetworks)
-  objectsList$metanetwork <- synapseClient::Folder(name='metanetwork',parentId=objectsList$exprNetworks@properties$id)
-  objectsList$metanetwork <- synapseClient::synStore(objectsList$metanetwork)
-  objectsList$speakeasy <- synapseClient::Folder(name='speakeasy',parentId=objectsList$exprNetworks@properties$id)
-  objectsList$speakeasy <- synapseClient::synStore(objectsList$speakeasy)
-  objectsList$trena <- synapseClient::Folder(name='trena',parentId=objectsList$exprNetworks@properties$id)
-  objectsList$trena <- synapseClient::synStore(objectsList$trena)
-  objectsList$megena <- synapseClient::Folder(name='megena',parentId=objectsList$exprNetworks@properties$id)
-  objectsList$megena <- synapseClient::synStore(objectsList$megena)
-  objectsList$wgcna <- synapseClient::Folder(name='wgcna',parentId=objectsList$exprNetworks@properties$id)
-  objectsList$wgcna <- synapseClient::synStore(objectsList$wgcna)
-  return(objectsList)
-}
-
-
-MSSMFPId <- 'syn7980638'
-MSSMITGId <- 'syn7980629'
-MSSMPHGId <- 'syn7980634'
-MSSMSTGId <- 'syn7980616'
-MSSMFPManifest <- populateFolders(MSSMFPId)
-MSSMITGManifest <- populateFolders(MSSMITGId)
-MSSMPHGManifest <- populateFolders(MSSMPHGId)
-MSSMSTGManifest <- populateFolders(MSSMSTGId)
-
-library(data.table)
-exprData <- fread(exprDataObj@filePath,data.table=F)
+exprData <- data.table::fread(exprDataObj@filePath,data.table=F)
 exprData <- exprData[-c(1:4),]
 whichDup <- which(duplicated(exprData$ensembl_gene_id))
 exprData <- exprData[-whichDup,]
