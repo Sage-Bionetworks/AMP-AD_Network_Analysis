@@ -28,7 +28,7 @@ write.csv(exprDataTCX,file='MayoRNAseq_TCX.csv',quote=F)
 write.csv(exprDataCER,file='MayoRNAseq_CER.csv',quote=F)
 
 #version comment
-commentTCX = "Mayo RNAseq TCX expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis"
+commentTCX = "Mayo RNAseq TCX expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue"
 
 foo = synapseClient::File('MayoRNAseq_TCX.csv',parentId='syn8257429',versionComment = commentTCX)
 
@@ -55,7 +55,7 @@ foo = synapseClient::synStore(foo,
 
 
 #version comment
-commentCER = "Mayo RNAseq CER expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds with genes in the correct format for metanetwork as rows"
+commentCER = "Mayo RNAseq CER expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue"
 
 foo = synapseClient::File('MayoRNAseq_CER.csv',parentId='syn8257427',versionComment = commentCER)
 
