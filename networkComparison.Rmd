@@ -1,7 +1,7 @@
 ---
 title: "Network Comparison"
 author: "Benjamin A Logsdon"
-date: "3/14/2017"
+date: "3/20/2017"
 output: html_document
 ---
 
@@ -16,7 +16,7 @@ First we query the private collaboration space (syn2370594) for networks where t
 synapseClient::synapseLogin()
 foo <- synapseClient::synQuery('select * from file where method==\'bic\' and projectId==\'syn2370594\'')
 bar <- dplyr::select(foo,file.name,file.id,file.versionComment)
-head(bar)
+bar
 ```
 
 Next, we load the networks into R and name them appropriately, and grab the number of edges each network has to append to the network manifest.
@@ -28,21 +28,22 @@ loadBic <- function(synId){
   load(foo@filePath)
   return(bicNetworks$network)
 }
-
+library(Matrix)
 ampNetworks <- lapply(bar$file.id,loadBic)
-names(ampNetworks) <- c('rosmap',
-                        'mayoTcx',
-                        'mayoCer',
+names(ampNetworks) <- c('mayoCer',
                         'mssmFp',
                         'mssmStg',
                         'mssmPhg',
                         'mssmIfg',
+                        'mayoTcx',
                         'mcadgsTCX',
-                        'mcadgsCER')
+                        'mcadgsCER',
+                        'rosmap')
 rownames(bar) <- names(ampNetworks)
 nedges <- sapply(ampNetworks,function(x) sum(x))
 bar$nedges <- nedges
-head(bar)
+bar
+
 ```
 
 We'll want to convert the networks to full sparse adjacency matrices (not just upper diagonal sparse matrices).
