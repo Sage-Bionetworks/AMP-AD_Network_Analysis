@@ -44,7 +44,7 @@ pushToSynapseFxn <- function(exprMat,fileName,parentId,comment){
                                  ref = 'branch',
                                  refName = 'mssm-patch-1',
                                  repositoryPath = 'mssmRNAseq.R')
-  foo = synStore(foo,
+  foo = synapseClient::synStore(foo,
                  used = as.list(c('syn8485027')),
                  executed = as.list(c(permLink)),
                  activityName = 'Format MSSM RNAseq Data',
