@@ -51,7 +51,7 @@ KEY <- read.csv(synapseClient::getFileLocation(rosmapIdMapObj))%>%
   dplyr::select(-batch) %>%
   unique
 
-expressionDataObj <- synapseClient::synGet('syn8456638')
+expressionDataObj <- synapseClient::synGet('syn8456719')
 expressionData <- data.table::fread(synapseClient::getFileLocation(expressionDataObj),data.table=F)
 rownames(expressionData) <- expressionData$ensembl_gene_id
 expressionData <- dplyr::select(expressionData,-ensembl_gene_id)
@@ -68,7 +68,19 @@ load(synapseClient::getFileLocation(rosmapMetanetworkObj))
 
 rosmap <- igraph::graph_from_adjacency_matrix(bicNetworks$network,
                                               mode='undirected')
-degree <- igraph::authority_score(rosmap)$vector
+degree <- igraph::degree(rosmap)
 degree2 <- data.frame(ensembl_gene_id=names(degree),degree=degree,stringsAsFactors=F)
 degree2 <- dplyr::arrange(degree2,desc(degree))
 degree2[1:5,]
+
+
+rosmapfxn  <- function(gene,combinedData1){
+  
+  lmObj <- lm(cogn_global_slope ~ age_death+ceradsc+braaksc+cogdx+apoe_genotype+gene,data = combinedData1)
+  return(summary(lmObj)$coef)
+}
+
+lmObj <- lm(cogn_global_slope ~ age_death+ceradsc+braaksc+cogdx+apoe_genotype+ENSG00000120088,data = combinedData)
+summary(lmObj)
+
+rosmapfxn('ENSG00000120088',combinedData)
