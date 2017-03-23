@@ -45,3 +45,19 @@ n1 <- names(sort(rosmapNetworkStats$authority_score$vector,decreasing=T)[1:5])
 n1 <- names(sort(rosmapNetworkStats$degree,decreasing=T)[1:5])
 
 utilityFunctions::convertEnsemblToHgnc(n1)
+
+
+
+
+
+
+degree3 <- igraph::authority_score(rosmap)$vector
+hubs <- data.frame(ensembl_gene_id=names(degree3),degree=degree3,stringsAsFactors=F)
+hubs[1:5,]
+mappingTable <- utilityFunctions::convertEnsemblToHgnc(hubs$ensembl_gene_id)
+combinedTable <- dplyr::left_join(mappingTable,hubs,by=ensembl_gene_id)
+colnames(mappingTable)
+combinedTable <- dplyr::left_join(mappingTable,hubs,by='ensembl_gene_id')
+combinedTable[1:5,]
+combinedTable2 <- dplyr::arrange(combinedTable,desc(degree))
+cat(combinedTable2$external_gene_name[1:500],sep='\n',file='~/Desktop/test.csv')
