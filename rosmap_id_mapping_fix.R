@@ -13,7 +13,7 @@ rosmapMetanetworkObj <- synapseClient::synGet('syn8268669')
 rosmapClinical <- data.table::fread(synapseClient::getFileLocation(rosmapClinicalObj),
                                     data.table=F)
 rosmapClinical <- dplyr::select(rosmapClinical,-V1,-age_death,-age_first_ad_dx,-age_at_visit_max)
-View(rosmapClinical)
+#View(rosmapClinical)
 
 
 ####read in uncensored age file
@@ -43,12 +43,32 @@ lmObj <- lm(cogn_global_slope ~ age_death+ceradsc+braaksc+cogdx+apoe_genotype,da
 summary(lmObj)
 
 library(dplyr)
-KEY <- read.csv(synapseClient::getFileLocation(rosmapIdMapObj))%>% 
+KEY <- read.csv(synapseClient::getFileLocation(rosmapIdMapObj))%>%
   dplyr::filter(mrna_data == 1) %>%
   dplyr::select(projid, mrna_id) %>%
-  tidyr::separate(mrna_id, c('a','b','batch'), sep = '_') %>% 
+  tidyr::separate(mrna_id, c('a','b','batch'), sep = '_') %>%
   tidyr::unite(Sampleid, a, b) %>%
   dplyr::select(-batch) %>%
   unique
 
 expressionDataObj <- synapseClient::synGet('syn8456638')
+expressionData <- data.table::fread(synapseClient::getFileLocation(expressionDataObj),data.table=F)
+rownames(expressionData) <- expressionData$ensembl_gene_id
+expressionData <- dplyr::select(expressionData,-ensembl_gene_id)
+expressionData <- t(expressionData)
+expressionData <- data.frame(expressionData,stringsAsFactors=F)
+expressionData$aSampleId <- rownames(expressionData)
+
+expressionData <- dplyr::left_join(expressionData,KEY,by=c('aSampleId'='Sampleid'))
+combinedData <- dplyr::left_join(expressionData,rosmapClinical,by='projid')
+
+lmObj <- lm(cogn_global_slope ~ age_death+ceradsc+braaksc+cogdx+apoe_genotype+ENSG00000123338,data = combinedData)
+summary(lmObj)
+load(synapseClient::getFileLocation(rosmapMetanetworkObj))
+
+rosmap <- igraph::graph_from_adjacency_matrix(bicNetworks$network,
+                                              mode='undirected')
+degree <- igraph::authority_score(rosmap)$vector
+degree2 <- data.frame(ensembl_gene_id=names(degree),degree=degree,stringsAsFactors=F)
+degree2 <- dplyr::arrange(degree2,desc(degree))
+degree2[1:5,]
