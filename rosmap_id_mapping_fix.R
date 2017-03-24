@@ -84,11 +84,40 @@ lmFun <- function(x,y,z){
   return(summary(lmObj)$coef[1,4])
 }
 expressionHarmonized <- dplyr::select(combinedData,starts_with("ENSG"))
-expressionHarmonized <- expressionHarmonized[-a1,]
+#expressionHarmonized <- expressionHarmonized[-a1,]
 foo2 <- apply(expressionHarmonized,2,lmFun,y=as.matrix(combinedData$cogn_global_slope),z=foobar)
 
 
 tabl23 <- data.frame(pval=foo2,ensembl_gene_id=names(foo2),stringsAsFactors = F)
+
+collateGraphStatistics <- function(graph){
+  model <- list()
+  cat('Computing Degree...\n')
+  model$degree <- igraph::degree(graph)
+  #model$alpha_centrality <- igraph::alpha_centrality(graph,tol=1e-14)
+  cat('Computing Authority Score...\n')
+  model$authority_score <- igraph::authority_score(graph)$vector
+  
+  cat('Computing Closeness...\n')
+  model$closeness <- igraph::closeness(graph)
+  
+  cat('Computing Eccentricity...\n')
+  model$eccentricity <- igraph::eccentricity(graph)
+  
+  cat('Computing Eigenvector Centrality...\n')
+  model$eigen_centrality <- igraph::eigen_centrality(graph)$vector
+  
+  cat('Computing Betweeness Centrality...\n')
+  model$centr_betw <- igraph::betweenness(graph)
+  
+  cat('Computing Transitivity...\n')
+  model$transitivity <- igraph::transitivity(graph,
+                                             type='undirected')
+  
+  return(model)
+}
+
+rosmapNetworkStats <- collateGraphStatistics(rosmap)
 
 rosmapNetworkStats$ensembl_gene_id <- rownames(rosmapNetworkStats)
 
