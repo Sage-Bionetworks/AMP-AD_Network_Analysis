@@ -51,7 +51,7 @@ KEY <- read.csv(synapseClient::getFileLocation(rosmapIdMapObj))%>%
   dplyr::select(-batch) %>%
   unique
 
-expressionDataObj <- synapseClient::synGet('syn8456638')
+expressionDataObj <- synapseClient::synGet('syn8456719')
 expressionData <- data.table::fread(synapseClient::getFileLocation(expressionDataObj),data.table=F)
 rownames(expressionData) <- expressionData$ensembl_gene_id
 expressionData <- dplyr::select(expressionData,-ensembl_gene_id)
@@ -68,7 +68,7 @@ load(synapseClient::getFileLocation(rosmapMetanetworkObj))
 
 rosmap <- igraph::graph_from_adjacency_matrix(bicNetworks$network,
                                               mode='undirected')
-degree <- igraph::betweenness(rosmap)
+degree <- igraph::degree(rosmap)
 degree2 <- data.frame(ensembl_gene_id=names(degree),degree=degree,stringsAsFactors=F)
 degree2 <- dplyr::arrange(degree2,desc(degree))
 degree2[1:5,]
@@ -103,3 +103,4 @@ tabl56 <- dplyr::mutate(tabl56,networkFeature=betas[1] + betas[2]*degree + betas
 tabl56 <- dplyr::arrange(tabl56,desc(networkFeature))
 tabl56 <- dplyr::arrange(tabl56,(pval))
 cat(tabl56$external_gene_name[1:500],file='~/Desktop/networkz.csv',sep='\n')
+
