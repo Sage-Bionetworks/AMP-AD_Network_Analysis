@@ -86,9 +86,34 @@ lmFun <- function(x,y,z){
 expressionHarmonized <- dplyr::select(combinedData,starts_with("ENSG"))
 #expressionHarmonized <- expressionHarmonized[-a1,]
 foo2 <- apply(expressionHarmonized,2,lmFun,y=as.matrix(combinedData$cogn_global_slope),z=foobar)
-
+#nullModel <- utilityFunctions::varCompWrapperFunction(outcome=scale(combinedData$cogn_global_slope),
+#                                                     features=data.matrix(foobar))
 
 tabl23 <- data.frame(pval=foo2,ensembl_gene_id=names(foo2),stringsAsFactors = F)
+#merge tabl23 and degree2
+degree3 <- dplyr::left_join(degree2,tabl23,by='ensembl_gene_id')
+degree3 <- dplyr::arrange(degree3,desc(degree))
+
+###lasso
+lassoFxn <- function(foobar,expressionHarmonized,aleph=1,nfolds1=10){
+  masterMatrix <- cbind(data.matrix(foobar),data.matrix(expressionHarmonized))
+  set.seed(1)
+  lasso <- glmnet::cv.glmnet(y=scale(combinedData$cogn_global_slope),
+                             x=masterMatrix,
+                             penalty.factor=c(rep(0,ncol(foobar)),rep(1,ncol(expressionHarmonized))),
+                             alpha=aleph,
+                             nfolds=nfolds1)
+  model <- list()
+  model$min_error <- min(lasso$cvm)
+  model$path_min <- which.min(lasso$cvm)
+  model$coef <- which(lasso$glmnet.fit$beta[,model$path_min]!=0)
+  model$lasso <- lasso
+  return(model)
+}
+lassoAlt1 <- lassoFxn(foobar,expressionHarmonized)
+lassoAlt2 <- lassoFxn(foobar,dplyr::select(expressionHarmonized,one_of(degree3$ensembl_gene_id[1:1500])),aleph=1);c(lassoAlt2$min_error,lassoAlt2$path_min)
+
+
 
 collateGraphStatistics <- function(graph){
   model <- list()
@@ -118,10 +143,19 @@ collateGraphStatistics <- function(graph){
 }
 
 rosmapNetworkStats <- collateGraphStatistics(rosmap)
+rosmapNetworkStats2 <- data.frame(rosmapNetworkStats,stringsAsFactors=F)
+rosmapNetworkStats2$ensembl_gene_id <- names(degree)
+rosmapNetworkStats2 <- dplyr::arrange(rosmapNetworkStats2,desc(authority_score))
+tabl34 <- dplyr::left_join(rosmapNetworkStats2,tabl23,by='ensembl_gene_id')
+tabl34 <- dplyr::arrange(tabl34,desc(closeness))
+gap::qqunif(tabl34$pval,xlim=c(0,5),ylim=c(0,6))
+par(new=T)
+gap::qqunif(tabl34$pval[1:30],col='red',xlim=c(0,5),ylim=c(0,6))
 
-rosmapNetworkStats$ensembl_gene_id <- rownames(rosmapNetworkStats)
+lassoAlt1 <- lassoFxn(foobar,expressionHarmonized)
+lassoAlt2 <- lassoFxn(foobar,dplyr::select(expressionHarmonized,one_of(tabl34$ensembl_gene_id[1:30])),aleph=1,nfolds=510);c(lassoAlt2$min_error,lassoAlt2$path_min)
 
-tabl34 <- dplyr::left_join(rosmapNetworkStats,tabl23,by='ensembl_gene_id')
+
 geneMap <- utilityFunctions::convertEnsemblToHgnc(tabl34$ensembl_gene_id)
 tabl56 <- dplyr::left_join(tabl34,geneMap,by='ensembl_gene_id')
 View(tabl56)
