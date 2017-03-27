@@ -16,7 +16,7 @@ exprData <- t(exprData)
 write.csv(exprData,file='ROSMAP_Expression.csv',quote=F)
 
 #version comment
-comment = "ROSMAP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds without adjusting for clinical or cognitive phenotypes"
+comment = "ROSMAP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds without adjusting for clinical or cognitive phenotypes for march 24 2017 data freeze"
 
 foo = synapseClient::File('ROSMAP_Expression.csv',parentId='syn7981630',versionComment = comment)
 
