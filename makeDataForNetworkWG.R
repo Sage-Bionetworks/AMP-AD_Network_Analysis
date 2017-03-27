@@ -1,4 +1,4 @@
-#library(synapseClient)
+library(synapseClient)
 synapseClient::synapseLogin()
 winsorizeAndScale <- function(x){
   library(dplyr)
@@ -11,9 +11,9 @@ winsorizeAndScale <- function(x){
 #######query private project and pull data
 #dataType=mRNA
 foo <- synapseClient::synQuery('select name,id from file where projectId==\'syn2370594\' and dataType==\'mRNA\'')
-
+foo <- foo[1:7,]
 #get data for just rnaseq studies
-bar <- lapply(foo$file.id[1:7],synGet)
+bar <- lapply(foo$file.id,synGet)
 
 #function to load data quickly
 loadData <- function(x){
