@@ -51,7 +51,7 @@ pushToSynapseFxn <- function(exprMat,fileName,parentId,comment){
                  activityDescription = 'Push MSSM RNAseq data into format for network pipeline')
 }
 
-pushToSynapseFxn(exprDataFP,'MSSMRNAseq_FP.csv',"syn8281257","MSSM RNAseq FP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia with no dx adj")
-pushToSynapseFxn(exprDataSTG,'MSSMRNAseq_STG.csv',"syn8281286","MSSM RNAseq STG expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia with no dx adj")
-pushToSynapseFxn(exprDataPHG,'MSSMRNAseq_PHG.csv',"syn8281279","MSSM RNAseq PHG expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia with no dx adj")
-pushToSynapseFxn(exprDataIFG,'MSSMRNAseq_IFG.csv',"syn8281272","MSSM RNAseq IFG expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia with no dx adj")
+pushToSynapseFxn(exprDataFP,'MSSMRNAseq_FP.csv',"syn8281257","MSSM RNAseq FP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia with no dx adj for March 24 2017 data freeze")
+pushToSynapseFxn(exprDataSTG,'MSSMRNAseq_STG.csv',"syn8281286","MSSM RNAseq STG expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia with no dx adj for March 24 2017 data freeze")
+pushToSynapseFxn(exprDataPHG,'MSSMRNAseq_PHG.csv',"syn8281279","MSSM RNAseq PHG expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia with no dx adj for March 24 2017 data freeze")
+pushToSynapseFxn(exprDataIFG,'MSSMRNAseq_IFG.csv',"syn8281272","MSSM RNAseq IFG expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia with no dx adj for March 24 2017 data freeze")
