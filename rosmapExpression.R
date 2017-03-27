@@ -34,7 +34,7 @@ permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Ana
 
 #provenance and store
 foo = synapseClient::synStore(foo,
-               used = as.list(c('syn8018356')),
+               used = as.list(c('syn8456719')),
                executed = as.list(c(permLink)),
                activityName = 'Format ROSMAP expression Data',
                activityDescription = 'Push ROSMAP data into format for network pipeline')
