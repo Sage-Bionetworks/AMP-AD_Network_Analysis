@@ -1,5 +1,5 @@
-library(synapseClient)
-synapseLogin()
+#library(synapseClient)
+synapseClient::synapseLogin()
 winsorizeAndScale <- function(x){
   library(dplyr)
   library(utilityFunctions)
@@ -10,10 +10,10 @@ winsorizeAndScale <- function(x){
 }
 #######query private project and pull data
 #dataType=mRNA
-foo <- synQuery('select name,id from file where projectId==\'syn2370594\' and dataType==\'mRNA\'')
+foo <- synapseClient::synQuery('select name,id from file where projectId==\'syn2370594\' and dataType==\'mRNA\'')
 
-#get data
-bar <- lapply(foo$file.id,synGet)
+#get data for just rnaseq studies
+bar <- lapply(foo$file.id[1:7],synGet)
 
 #function to load data quickly
 loadData <- function(x){
@@ -42,7 +42,7 @@ library(githubr)
 
 permLink1 =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
                                ref = 'branch',
-                               refName = 'mayornaseq',
+                               refName = 'rosmap-patch-1',
                                repositoryPath = 'makeDataForNetworkWG.R')
 
 permLink2 =githubr::getPermlink(repository = 'Sage-Bionetworks/rSynapseUtilities',
