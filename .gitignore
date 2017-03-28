@@ -15,9 +15,13 @@ Scaled_Winsorized_ROSMAP_Expression.csv
 MCADGS_CER.csv
 MCADGS_TCX.csv
 testSet.csv
-metanetworkTopologyPairwiseComparison.R
-metanetworkTopologyPairwiseComparison.csv
 networkComparison.html
 networkComparison_cache
 networkComparison_files
+metanetworkTopologyPairwiseComparison.R
+metanetworkTopologyPairwiseComparison.csv
 MSSMRNAseq_FP.csv
+MSSMRNAseq_IFG.csv
+MSSMRNAseq_PHG.csv
+MSSMRNAseq_STG.csv
+testCaseDefinitions.R

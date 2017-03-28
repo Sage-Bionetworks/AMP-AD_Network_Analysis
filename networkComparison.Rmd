@@ -1,0 +1,239 @@
+---
+title: "Network Comparison"
+author: "Benjamin A Logsdon"
+date: "3/20/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+## Grab Networks from Synapse
+First we query the private collaboration space (syn2370594) for networks where the method is defined as bic - the sparse metanetworks, and reduce down to columns of interest with dplyr select.
+```{r query, message=FALSE, warning=FALSE}
+synapseClient::synapseLogin()
+foo <- synapseClient::synQuery('select * from file where method==\'bic\' and projectId==\'syn2370594\'')
+bar <- dplyr::select(foo,file.name,file.id,file.versionComment)
+bar
+```
+
+Next, we load the networks into R and name them appropriately, and grab the number of edges each network has to append to the network manifest.
+
+```{r load, message=FALSE, warning=FALSE}
+loadBic <- function(synId){
+  synapseClient::synapseLogin()
+  foo<-synapseClient::synGet(synId)
+  load(foo@filePath)
+  return(bicNetworks$network)
+}
+library(Matrix)
+ampNetworks <- lapply(bar$file.id,loadBic)
+names(ampNetworks) <- c('mayoCer',
+                        'mssmFp',
+                        'mssmStg',
+                        'mssmPhg',
+                        'mssmIfg',
+                        'mayoTcx',
+                        'mcadgsTCX',
+                        'mcadgsCER',
+                        'rosmap')
+rownames(bar) <- names(ampNetworks)
+nedges <- sapply(ampNetworks,function(x) sum(x))
+bar$nedges <- nedges
+bar
+
+```
+
+We'll want to convert the networks to full sparse adjacency matrices (not just upper diagonal sparse matrices).
+
+```{r modifyNet}
+makeFull <- function(x){
+  gc()
+  x <- as.matrix(x)
+  x <- x+t(x)
+  x <- Matrix::Matrix(x,sparse = TRUE)
+  return(x)
+}
+ampNetworks <- lapply(ampNetworks,makeFull)
+ampNetworks$rosmap[1:5,1:5]
+```
+
+## Network comparison
+Next, we create a manifest of all pairwise comparisons between each type of network.
+
+
+```{r manifest, message=FALSE, warning=FALSE}
+library(dplyr)
+methodManifest <- combn(names(ampNetworks),2) %>% t
+colnames(methodManifest) <- c('network1','network2')
+methodManifest <- data.frame(methodManifest,
+                             stringsAsFactors=F)
+head(methodManifest)
+```
+
+We're going to use this manifest to iterate over all pairwise comparisons between networks.  We'll do so using a function in the metanetwork package that computes a Fisher's exact test for overlap of edge sets between networks, along with some other summary statistics.  We'll use a wrapper function to do the parameter handling.
+
+```{r comparison}
+
+wrapperFxn <- function(method1,method2,allnets){
+  cat('method1:',method1,'method2:',method2,'\n')
+  return(metanetwork::compareTwoNetworks(allnets[[method1]],allnets[[method2]]))
+}
+
+networkCompare <- mapply(wrapperFxn,
+                         methodManifest[,1],
+                         methodManifest[,2],
+                         MoreArgs = list(allnets=ampNetworks),
+                         SIMPLIFY = FALSE)
+```
+
+
+Next, we fill out the pairwise comparison manifest with relevant statistics from the pairwise comparison, and properties of the networks.
+
+```{r manifest2}
+grabOddsRatios <- function(x){
+  return(x[[1]]$estimate)
+}
+grabPvalue <- function(x){
+  return(x[[1]]$p.value)
+}
+getSynIds <- function(x,networkManifest){
+  return(networkManifest[x,'file.id'])
+}
+getNetwork1Overlap <- function(x){
+  return(x[[2]])
+}
+getNetwork2Overlap <- function(x){
+  return(x[[3]])
+}
+getNedges <- function(x,networkManifest){
+  return(networkManifest[x,'nedges'])
+}
+
+ors <- sapply(networkCompare,grabOddsRatios)
+pvals <- sapply(networkCompare,grabPvalue)
+network1synId <- sapply(methodManifest$network1,getSynIds,bar)
+network2synId <- sapply(methodManifest$network2,getSynIds,bar)
+network1Overlap <- sapply(networkCompare,getNetwork1Overlap)
+network2Overlap <- sapply(networkCompare,getNetwork2Overlap)
+#colnames(methodManifest) <- c('network1','network2')
+#methodManifest <- data.frame(methodManifest,
+#                             stringsAsFactors = F)
+methodManifest$ors <- ors
+methodManifest$network1synId <- network1synId
+methodManifest$network2synId <- network2synId
+methodManifest$network1Overlap <- network1Overlap
+methodManifest$network2Overlap <- network2Overlap
+methodManifest$network1Nedges <- sapply(methodManifest$network1,getNedges,bar)
+methodManifest$network2Nedges <- sapply(methodManifest$network2,getNedges,bar)
+
+head(methodManifest)
+```
+
+## Push manifest to Synapse
+Next, let's push the manifest of pariwise comparisons to Synapse as a csv file and as a table.
+
+```{r synapse, message=FALSE, warning=FALSE}
+storageFolderId <- 'syn8449629'
+permLink1 <- githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
+                               ref = 'branch',
+                               refName = 'comparisons',
+                               repositoryPath = 'networkComparison.Rmd')
+
+permLink2 <- githubr::getPermlink(repository = 'Sage-Bionetworks/metanetwork',
+                               ref = 'branch',
+                               refName = 'dev',
+                               repositoryPath = 'R/compareTwoNetworks.R')
+
+permLink3 <- githubr::getPermlink(repository = 'Sage-Bionetworks/rSynapseUtilities',
+                               ref = 'branch',
+                               refName = 'dev',
+                               repositoryPath = 'R/pushToSynapseWrapper.R')
+
+manifestFileName <- 'metanetworkTopologyPairwiseComparison.csv'
+
+annots <- list(fileType='csv',
+  summaryLevel='gene',
+  organism='HomoSapiens',
+  dataType='analysis',
+  analysisType='networkTopologyComparison')
+
+comments <- "Pairwise comparison between each pairs of rank consensus sparse networks from AMP-AD expression data"
+
+usedids <- as.list(bar$file.id)
+
+executedurls <- as.list(c(permLink1,permLink2,permLink3))
+
+activitys <- "Pairwise Coexpression Topology Comparison"
+
+activityDescription <- "Compare all pairs of coexpression network topologies."
+
+comparisonObj = rSynapseUtilities::pushToSynapseWrapper(df=methodManifest,
+                                     fileName=manifestFileName,
+                                     synapseFolderId=storageFolderId,
+                                     annos=annots,
+                                     comment=comments,
+                                     usedVector=usedids,
+                                     executedVector=executedurls,
+                                     activityName1=activitys,
+                                     activityDescription1=activityDescription)
+
+rSynapseUtilities::makeTable(df=methodManifest,
+                             tableName='Pairwise Sparse Metanetwork Topology Comparison',
+                             projectId='syn2370594')
+
+```
+
+
+## Visualizations
+Next, let's make some plots that will help us understand the relationships between the network topologies, first a pca plot
+
+```{r plots, echo=FALSE}
+methodManifest2 <- dplyr::select(methodManifest,network1,network2,ors)
+distMat <- tidyr::spread(methodManifest2,
+                         network1,
+                         ors)
+rownames(distMat) <- distMat$network2
+distMat <- dplyr::select(distMat,-network2)
+missingRow <- setdiff(colnames(distMat),rownames(distMat))
+missingCol <- setdiff(rownames(distMat),colnames(distMat))
+distMat[,missingCol] <- NA
+distMat[missingRow,] <- NA
+distMat <- distMat[,rownames(distMat)]
+distMat[(is.na(distMat))] <- 0
+distMat2 <- distMat + t(distMat)
+View(distMat2)
+svd2 <- svd(distMat2)
+library(wesanderson)
+
+makePcPlot <- function(svdecomp,i,j,nameVec){
+  rangex <- max(svd2$u[,i])-min(svd2$u[,i])
+  rangey <- max(svd2$u[,j])-min(svd2$u[,j])
+  xmin <- min(svd2$u[,i])-0.10*rangex
+  xmax <- max(svd2$u[,i])+0.10*rangex
+  ymin <- min(svd2$u[,j])-0.10*rangey
+  ymax <- max(svd2$u[,j])+0.10*rangey
+  plot(svd2$u[,i],
+       svd2$u[,j],
+       col='white',
+       xlim=c(xmin,xmax),
+       ylim=c(ymin,ymax),
+       xlab = paste0('PCA',i),
+       ylab = paste0('PCA',j))
+  text(svd2$u[,i],
+       svd2$u[,j],
+       nameVec,
+       col=wes_palette("Rushmore",7,type='continuous'))
+}
+makePcPlot(svd2,1,2,rownames(distMat))
+#par(mar=c(12,4,6,6))
+
+```
+
+next a heatmap of odds ratios of pairwise comparisons
+
+```{r heatmap,echo=FALSE}
+pheatmap::pheatmap(distMat2)
+```

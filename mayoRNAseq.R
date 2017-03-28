@@ -1,13 +1,10 @@
 synapseClient::synapseLogin()
 
-
-
 #steps: 
 #1) get rid of first 4 rows
 #2) split cerebellum and temporal cortex samples
 #3) ensure proper location for expression data and networks on Synapse done
 #4) make sure output is in proper format going forward
-
 exprDataObj <- synapseClient::synGet('syn8466826')
 #geneIdObj <- synGet('syn4922926')
 #sampleIdObj <- synGet('syn4922923')
@@ -28,7 +25,7 @@ write.csv(exprDataTCX,file='MayoRNAseq_TCX.csv',quote=F)
 write.csv(exprDataCER,file='MayoRNAseq_CER.csv',quote=F)
 
 #version comment
-commentTCX = "Mayo RNAseq TCX expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue"
+commentTCX = "Mayo RNAseq TCX expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue for March 24 2017 Freeze of data reprocessing and normalization"
 
 foo = synapseClient::File('MayoRNAseq_TCX.csv',parentId='syn8257429',versionComment = commentTCX)
 
@@ -41,7 +38,7 @@ synapseClient::synSetAnnotations(foo) = as.list(anno)
 
 permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
                                ref = 'branch',
-                               refName = 'mayo-patch-1',
+                               refName = 'ben-patch-1',
                                repositoryPath = 'mayoRNAseq.R')
 
 #provenance and store
@@ -55,7 +52,7 @@ foo = synapseClient::synStore(foo,
 
 
 #version comment
-commentCER = "Mayo RNAseq CER expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue"
+commentCER = "Mayo RNAseq CER expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue for March 24 2017 Freeze of data reprocessing and normalization"
 
 foo = synapseClient::File('MayoRNAseq_CER.csv',parentId='syn8257427',versionComment = commentCER)
 
@@ -68,7 +65,7 @@ synapseClient::synSetAnnotations(foo) = as.list(anno)
 
 permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
                                ref = 'branch',
-                               refName = 'mayo-patch-1',
+                               refName = 'ben-patch-1',
                                repositoryPath = 'mayoRNAseq.R')
 
 #provenance and store

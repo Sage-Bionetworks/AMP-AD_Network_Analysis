@@ -1,3 +1,4 @@
+synapseClient::synapseLogin()
 #steps: 
 #1) get rid of first 4 rows
 #2) split cerebellum and temporal cortex samples
