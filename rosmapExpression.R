@@ -16,7 +16,7 @@ exprData <- t(exprData)
 write.csv(exprData,file='ROSMAP_Expression.csv',quote=F)
 
 #version comment
-comment = "ROSMAP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds without adjusting for clinical or cognitive phenotypes"
+comment = "ROSMAP expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia, residualized for batch and technical confounds without adjusting for clinical or cognitive phenotypes for march 24 2017 data freeze"
 
 foo = synapseClient::File('ROSMAP_Expression.csv',parentId='syn7981630',versionComment = comment)
 
@@ -34,7 +34,7 @@ permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Ana
 
 #provenance and store
 foo = synapseClient::synStore(foo,
-               used = as.list(c('syn8018356')),
+               used = as.list(c('syn8456719')),
                executed = as.list(c(permLink)),
                activityName = 'Format ROSMAP expression Data',
                activityDescription = 'Push ROSMAP data into format for network pipeline')
