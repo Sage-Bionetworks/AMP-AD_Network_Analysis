@@ -62,6 +62,10 @@ expressionData$aSampleId <- rownames(expressionData)
 expressionData <- dplyr::left_join(expressionData,KEY,by=c('aSampleId'='Sampleid'))
 combinedData <- dplyr::left_join(expressionData,rosmapClinical,by='projid')
 
+
+
+
+
 lmObj <- lm(cogn_global_slope ~ age_death+ceradsc+braaksc+cogdx+apoe_genotype+ENSG00000182621,data = combinedData)
 summary(lmObj)
 load(synapseClient::getFileLocation(rosmapMetanetworkObj))
@@ -85,7 +89,11 @@ lmFun <- function(x,y,z){
 }
 expressionHarmonized <- dplyr::select(combinedData,starts_with("ENSG"))
 #expressionHarmonized <- expressionHarmonized[-a1,]
-foo2 <- apply(expressionHarmonized,2,lmFun,y=as.matrix(combinedData$cogn_global_slope),z=foobar)
+foo2 <- apply(expressionHarmonized,
+              2,
+              lmFun,
+              y=as.matrix(combinedData$cogn_global_slope),
+              z=foobar)
 #nullModel <- utilityFunctions::varCompWrapperFunction(outcome=scale(combinedData$cogn_global_slope),
 #                                                     features=data.matrix(foobar))
 
