@@ -1,8 +1,6 @@
 synapseClient::synapseLogin()
 
 exprDataObj <- synapseClient::synGet('syn8456719')
-#geneIdObj <- synGet('syn4922926')
-#sampleIdObj <- synGet('syn4922923')
 
 exprData <- data.table::fread(exprDataObj@filePath,data.table=F)
 

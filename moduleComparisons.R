@@ -29,8 +29,20 @@ convertToList <- function(df){
   names(listified) <- gn
   return(listified)
 }
+convertToList2 <- function(df){
+  tab1 <- table(df$moduleLabel)
+  tab1 <- tab1[which(tab1>=20)]
+  gn <- names(tab1)
+  fxn1 <- function(x,df2){
+    return(dplyr::filter(df2,moduleLabel==x)$Gene.ID)
+  }
+  listified <- lapply(gn,fxn1,df)
+  names(listified) <- gn
+  return(listified)
+}
 
 baz3 <- lapply(baz2,convertToList)
+baz4 <- lapply(baz2,convertToList2)
 
 #get gene sets
 genesets1 <- synapseClient::synGet('syn5923958')
