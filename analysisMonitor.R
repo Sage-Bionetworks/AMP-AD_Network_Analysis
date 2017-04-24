@@ -9,7 +9,7 @@ View(bicNetworkManifest@values)
 consensusModuleManifest <- synapseClient::synTableQuery("SELECT * FROM syn8681664 WHERE ( ( study = 'MSBB' OR study = 'MayoRNAseq' OR study = 'ROSMAP' ) AND ( analysisType = 'consensusModuleIdentification' ) )")
 View(consensusModuleManifest@values)
 
-moduleManifest <- synapseClient::synTableQuery("SELECT * FROM syn8681664 WHERE ( ( study = 'MSBB' OR study = 'MayoRNAseq' OR study = 'ROSMAP' ) AND ( analysisType = 'moduleIdentification' ) AND ( method = 'CFnder' OR method = 'fast_greedy' OR method = 'GANXiS' OR method = 'infomap' OR method = 'label_prop' OR method = 'linkcommunities' OR method = 'linkcommunities' OR method = 'louvain' OR method = 'spinglass' OR method = 'walktrap' ) )")
+moduleManifest <- synapseClient::synTableQuery("SELECT * FROM syn8681664 WHERE ( ( study = 'MSBB' OR study = 'MayoRNAseq' OR study = 'ROSMAP' ) AND ( analysisType = 'moduleIdentification' ) AND ( method = 'CFinder' OR method = 'fast_greedy' OR method = 'GANXiS' OR method = 'infomap' OR method = 'label_prop' OR method = 'linkcommunities' OR method = 'linkcommunities' OR method = 'louvain' OR method = 'spinglass' OR method = 'walktrap' ) )")
 View(moduleManifest@values)
 table(moduleManifest@values$tissueOfOrigin)
 
