@@ -1,6 +1,6 @@
 synapseClient::synapseLogin()
 
-foo <- synapseClient::synTableQuery("SELECT * FROM syn8681664 WHERE ( ( method = 'kmeans' OR method = 'speakEasy' OR method = 'megena' ) AND ( columnScaled = 'TRUE' ) AND ( study = 'ROSMAP' ) ) AND ( analysisType = 'moduleIdentification' OR analysisType = 'consensusModuleIdentification' )")
+foo <- synapseClient::synTableQuery("SELECT * FROM syn8681664 WHERE ( ( study = 'MSBB' OR study = 'MayoRNAseq' OR study = 'ROSMAP' ) AND ( analysisType = 'moduleIdentification' OR analysisType = 'consensusModuleIdentification') AND ( method = 'kmeans' OR method = 'wina' OR method = 'speakeasy' OR method = 'megena' OR method = 'wgcna' ) AND (tissueOfOrigin = 'dorsolateralPrefrontalCortex') AND (columnScaled = 'TRUE') )")
 
 rosmapModuleManifest <- foo@values
 bar <- lapply(rosmapModuleManifest$id,synapseClient::synGet)
@@ -17,9 +17,13 @@ colnames(modules$kmeans)[1:2] <- c('Gene.ID','Module')
 modules$kmeans <- dplyr::select(modules$kmeans,-moduleLabel)
 
 colnames(modules$megena)[1:2] <- c('Gene.ID','Module')
+modules$wina <- dplyr::select(modules$wina,Geneid,module)
+colnames(modules$wina)[1:2] <- c('Gene.ID','Module')
+
 View(modules$speakEasy)
 View(modules$kmeans)
 View(modules$megena)
+View(modules$wina)
 ######NMI
 
 fxn1 <- function(x){
@@ -45,7 +49,8 @@ foobar <- clue::as.cl_partition(as.matrix(megenaAdj))
 baz2$megena <- foobar
 names(baz2)[3] <- 'metanetwork'
 ensembleOfCluster <- clue::cl_ensemble(list = baz2)
-clue::cl_agreement(ensembleOfCluster,method = "NMI")
+nmi_score <- clue::cl_agreement(ensembleOfCluster,method = "NMI")
+crand_score <- clue::cl_agreement(ensembleOfCluster,method = "cRand")
 
 listify <- function(x,y,z){
   ###fxn will listify a long form table
@@ -62,17 +67,28 @@ abcd<-lapply(modules,function(df){
   return(res)
 })
 
-speakeasyVmetanetworkPval <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperPval,abcd[[3]],abcd[[2]],allGenes=union(unlist(abcd[[2]]),unlist(abcd[[3]])))
-speakeasyVmetanetworkOR <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperOR,abcd[[3]],abcd[[2]],allGenes=union(unlist(abcd[[2]]),unlist(abcd[[3]])))
+speakeasyVmetanetworkPval <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperPval,abcd[[3]],abcd[[4]],allGenes=union(unlist(abcd[[3]]),unlist(abcd[[4]])))
+speakeasyVmetanetworkOR <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperOR,abcd[[3]],abcd[[4]],allGenes=union(unlist(abcd[[3]]),unlist(abcd[[4]])))
 mv<-max(speakeasyVmetanetworkOR[-which(!is.finite(speakeasyVmetanetworkOR))])
 speakeasyVmetanetworkOR[which(!is.finite(speakeasyVmetanetworkOR))] <- mv
-png(filename='~/Desktop/rosmap_msbb.png',height=4,width=6,units='in',pointsize = 5,res=300)
-pheatmap::pheatmap(t((abs(speakeasyVmetanetworkOR))^(1/2)),
+#png(filename='~/Desktop/rosmap_msbb.png',height=4,width=6,units='in',pointsize = 5,res=300)
+
+speakeasyVmetanetworkPval2 <- p.adjust(speakeasyVmetanetworkPval,method='fdr') %>% matrix(nrow(speakeasyVmetanetworkPval),
+                                                                                          ncol(speakeasyVmetanetworkPval))
+
+
+connections <- t((speakeasyVmetanetworkPval2)<0.001)
+connections2 <- connections
+connections2[which(connections)] <- 1
+connections2[which(!connections)] <- 0
+pheatmap::pheatmap(connections2*(t(speakeasyVmetanetworkOR)^(1/4)),
                    scale='none',
                    labels_col=names(abcd[[1]]),
                    xlab='ROSMAP DLPFC Modules',
-                   ylab='MSBB FP Modules')
-dev.off()
+                   ylab='MSBB FP Modules',
+                   cluster_rows=FALSE,
+                   cluster_cols=FALSE)
+#dev.off()
 
 
 genesets1 <- synapseClient::synGet('syn5923958')
