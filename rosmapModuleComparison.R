@@ -97,6 +97,26 @@ fullPairwiseComparisonOR <- utilityFunctions::outerSapply(utilityFunctions::fish
                                                             allGenes=unique(modulesLarge$Gene.ID))
 
 
+aa3 <- p.adjust((fullPairwiseComparisonPval),method='fdr') %>% matrix(nrow(fullPairwiseComparisonPval),ncol(fullPairwiseComparisonPval))
+aa4 <- aa3<0.05
+rownames(aa4) <- rownames(fullPairwiseComparisonPval)
+colnames(aa4) <- colnames(fullPairwiseComparisonPval)
+#connections <- fullPairwiseComparisonPval < 1e-4
+connections2 <- aa4
+connections2[which(aa4)] <- 1
+connections2[which(!aa4)] <- 0
+pheatmap::pheatmap(connections2,
+                   scale='none',
+                   cluster_rows=FALSE,
+                   cluster_cols=FALSE)
+
+diag(aa4) <- FALSE
+www1 <- which(aa4,T)
+www2 <- www1
+www2[,1] <- rownames(aa4)[www1[,1]]
+www2[,2] <- colnames(aa4)[www1[,2]]
+write.csv(www2,file='~/Desktop/rosmapModuleMap.csv',quote=F)
+
 speakeasyVmetanetworkPval <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperPval,abcd[[3]],abcd[[4]],allGenes=union(unlist(abcd[[3]]),unlist(abcd[[4]])))
 speakeasyVmetanetworkOR <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperOR,abcd[[3]],abcd[[4]],allGenes=union(unlist(abcd[[3]]),unlist(abcd[[4]])))
 mv<-max(speakeasyVmetanetworkOR[-which(!is.finite(speakeasyVmetanetworkOR))])
