@@ -67,6 +67,36 @@ abcd<-lapply(modules,function(df){
   return(res)
 })
 
+###push modules into a single tidy data frame, modulesLarge
+expandModuleDf <- function(x,y){
+  x <- dplyr::mutate(x,method=rep(y,nrow(x)))
+  x <- dplyr::mutate(x,ModuleName=paste0(y,Module))
+  return(x)
+}
+names(modules)[3] <- 'metanetwork'
+modulesLarge <- mapply(expandModuleDf,
+                       modules,
+                       names(modules),
+                       SIMPLIFY=FALSE)
+modulesLarge <- do.call(rbind,modulesLarge)
+
+###turn into a list
+modulesLargeList <- lapply(unique(modulesLarge$ModuleName),
+                           listify,
+                           modulesLarge$Gene.ID,
+                           modulesLarge$ModuleName)
+names(modulesLargeList) <- unique(modulesLarge$ModuleName)
+fullPairwiseComparisonPval <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperPval,
+                                                            modulesLargeList,
+                                                            modulesLargeList,
+                                                            allGenes=unique(modulesLarge$Gene.ID))
+
+fullPairwiseComparisonOR <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperOR,
+                                                            modulesLargeList,
+                                                            modulesLargeList,
+                                                            allGenes=unique(modulesLarge$Gene.ID))
+
+
 speakeasyVmetanetworkPval <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperPval,abcd[[3]],abcd[[4]],allGenes=union(unlist(abcd[[3]]),unlist(abcd[[4]])))
 speakeasyVmetanetworkOR <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperOR,abcd[[3]],abcd[[4]],allGenes=union(unlist(abcd[[3]]),unlist(abcd[[4]])))
 mv<-max(speakeasyVmetanetworkOR[-which(!is.finite(speakeasyVmetanetworkOR))])
