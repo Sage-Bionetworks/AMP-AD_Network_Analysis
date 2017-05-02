@@ -1,3 +1,4 @@
+synapseClient::synapseLogin()
 mods <- list()
 
 mods$DLPFC <- synapseClient::synTableQuery('SELECT * FROM syn9705614')@values
@@ -6,7 +7,7 @@ mods$STG <- synapseClient::synTableQuery('SELECT * FROM syn9730669')@values
 mods$TCX <- synapseClient::synTableQuery('SELECT * FROM syn9730674')@values
 mods$CER <- synapseClient::synTableQuery('SELECT * FROM syn9730675')@values
 mods$PHG <- synapseClient::synTableQuery('SELECT * FROM syn9730672')@values
-mods$FP <- synapseClient::synTableQuery('SELECT * FROM syn9730673')@values
+mods$FP <- synapseClient::synTableQuery('SELECT * FROM syn9737595')@values
 
 
 ####compute NMI
@@ -52,12 +53,31 @@ getClueMods <- function(x){
   return(ensembleOfCluster)
 }
 
-DLPFC_clue <- getClueMods(DLPFC)
-IFG_clue <- getClueMods(IFG)
-STG_clue <- getClueMods(STG)
-TCX_clue <- getClueMods(TCX)
-CER_clue <- getClueMods(CER)
-PHG_clue <- getClueMods(PHG)
-FP_clue <- getClueMods(FP)
 
-nmi_score <- clue::cl_agreement(DLPFC_clue,method = "NMI")
+nmi <- lapply(mods,getClueMods)
+nmi_score <- lapply(nmi,clue::cl_agreement,method='NMI')
+
+convertNmiToFlatTable <- function(x){
+  x <- as.matrix(x)
+  #print(x)
+  foo1 <- which(lower.tri(x),T)
+  foo2 <- c(as.matrix(x))[which(lower.tri(x))]
+  foo3 <- foo1
+  foo3[,1] <- rownames(x)[foo1[,1]]
+  foo3[,2] <- colnames(x)[foo1[,2]]
+  df1 <- cbind(foo3,foo2)
+  colnames(df1) <- c('method1','method2','nmi')
+  df1 <- data.frame(df1,stringsAsFactors=F)
+  return(df1)
+}
+nmi_score_lf_list <- lapply(nmi_score,convertNmiToFlatTable)
+
+addBrainRegion <- function(x,y){
+  x <-cbind(x,rep(y,nrow(x)))
+  colnames(x)[ncol(x)] <- 'tissue'
+  return(x)
+}
+nmi_score_lf_list <- mapply(addBrainRegion,nmi_score_lf_list,names(nmi_score_lf_list),SIMPLIFY=F)
+nmi_score_lf_list <- do.call(rbind,nmi_score_lf_list)
+View(nmi_score_lf_list)
+rSynapseUtilities::makeTable(nmi_score_lf_list,'pairwise nmi scores','syn2370594')
