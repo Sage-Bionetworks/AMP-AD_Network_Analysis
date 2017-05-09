@@ -1,14 +1,24 @@
 synapseClient::synapseLogin()
-mods <- list()
+#mods <- list()
 
-mods$DLPFC <- synapseClient::synTableQuery('SELECT * FROM syn9705614')@values
-mods$IFG <- synapseClient::synTableQuery('SELECT * FROM syn9730668')@values
-mods$STG <- synapseClient::synTableQuery('SELECT * FROM syn9730669')@values
-mods$TCX <- synapseClient::synTableQuery('SELECT * FROM syn9730674')@values
-mods$CER <- synapseClient::synTableQuery('SELECT * FROM syn9730675')@values
-mods$PHG <- synapseClient::synTableQuery('SELECT * FROM syn9730672')@values
-mods$FP <- synapseClient::synTableQuery('SELECT * FROM syn9737595')@values
+#mods$DLPFC <- synapseClient::synTableQuery('SELECT * FROM syn9705614')@values
+#mods$IFG <- synapseClient::synTableQuery('SELECT * FROM syn9730668')@values
+#mods$STG <- synapseClient::synTableQuery('SELECT * FROM syn9730669')@values
+#mods$TCX <- synapseClient::synTableQuery('SELECT * FROM syn9730674')@values
+#mods$CER <- synapseClient::synTableQuery('SELECT * FROM syn9730675')@values
+#mods$PHG <- synapseClient::synTableQuery('SELECT * FROM syn9730672')@values
+#mods$FP <- synapseClient::synTableQuery('SELECT * FROM syn9737595')@values
 
+#get all mods
+allMods <- synapseClient::synTableQuery("SELECT * FROM syn9770791")@values
+
+#convert to brain region based list
+mods <- lapply(unique(allMods$brainRegion),
+               function(x,y){
+                  foo1 <- dplyr::filter(y,brainRegion==x)
+                  return(foo1)},
+               allMods)
+names(mods) <- unique(allMods$brainRegion)
 
 
 ####compute NMI
@@ -81,4 +91,7 @@ addBrainRegion <- function(x,y){
 nmi_score_lf_list <- mapply(addBrainRegion,nmi_score_lf_list,names(nmi_score_lf_list),SIMPLIFY=F)
 nmi_score_lf_list <- do.call(rbind,nmi_score_lf_list)
 View(nmi_score_lf_list)
-rSynapseUtilities::makeTable(nmi_score_lf_list,'pairwise nmi scores','syn2370594')
+rSynapseUtilities::makeTable(nmi_score_lf_list,'pairwise nmi scores with consensus','syn2370594')
+
+
+pheatmap::pheatmap(data.matrix(nmi_score[[1]]))
