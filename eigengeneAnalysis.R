@@ -2,7 +2,7 @@
 source('loadAMPADModules.R')
 source('pullExpressionAndPheno.R')
 ###get all modules from synapse now stored in allMods
-
+allMods <- synapseClient::synTableQuery("SELECT * FROM syn9770791")@values
 
 ###explode into list
 listify <- function(x,y,z){
@@ -154,9 +154,9 @@ moduleManifestCombined2 <- dplyr::mutate(moduleManifestCombined,
 moduleManifestCombined2 <- dplyr::arrange(moduleManifestCombined2,eigengeneAggregate)
 
 moduleManifestCombined3 <- moduleManifestCombined2
-moduleManifestCombined3$ModuleNameFull <- gsub("kmeans","metanetwork",moduleManifestCombined3$ModuleNameFull)
-moduleManifestCombined3$method <- gsub("kmeans","metanetwork",moduleManifestCombined3$method)
-moduleManifestCombined3$ModuleName <- gsub("kmeans","metanetwork",moduleManifestCombined3$ModuleName)
+#moduleManifestCombined3$ModuleNameFull <- gsub("kmeans","metanetwork",moduleManifestCombined3$ModuleNameFull)
+#moduleManifestCombined3$method <- gsub("kmeans","metanetwork",moduleManifestCombined3$method)
+#moduleManifestCombined3$ModuleName <- gsub("kmeans","metanetwork",moduleManifestCombined3$ModuleName)
 rSynapseUtilities::makeTable(moduleManifestCombined3,'cross study eigengene analysis','syn2370594')
 
 
@@ -292,33 +292,58 @@ convertEnsToHgnc <- function(x,map){
 }
 modulesLargeListHgnc <- lapply(modulesLargeList,convertEnsToHgnc,masterGeneMap)
 
+
+moduleManifestCombined2b <- dplyr::mutate(moduleManifestCombined,
+                                         eigengeneAggregate = aggPval)
+
 ####
 adEnrich <- lapply(modulesLargeListHgnc,utilityFunctions::fisherWrapperPval,adList,masterGeneMap$external_gene_name)
-rosmapModuleSummaryTable <- dplyr::mutate(rosmapModuleSummaryTable,adGeneticEnrich = unlist(adEnrich))
+
+tdf <- data.frame(ModuleNameFull = names(unlist(adEnrich)),adGeneticEnrich = unlist(adEnrich),stringsAsFactors=F)
+moduleManifestCombined2b <- dplyr::left_join(moduleManifestCombined2b,tdf)
+
+#moduleManifestCombined2b <- dplyr::mutate(moduleManifestCombined2b,adGeneticEnrich = unlist(adEnrich))
 
 microglialEnrich <- lapply(modulesLargeListHgnc,utilityFunctions::fisherWrapperPval,microglialList,masterGeneMap$external_gene_name)
+#moduleManifestCombined2b <- dplyr::mutate(moduleManifestCombined2b,microglialEnrichment = unlist(microglialEnrich))
+tdf <- data.frame(ModuleNameFull = names(unlist(microglialEnrich)),microgEnrich = unlist(microglialEnrich),stringsAsFactors=F)
+moduleManifestCombined2b <- dplyr::left_join(moduleManifestCombined2b,tdf)
+
 neuralEnrich <- lapply(modulesLargeListHgnc,utilityFunctions::fisherWrapperPval,neuralList,masterGeneMap$external_gene_name)
+tdf <- data.frame(ModuleNameFull = names(unlist(neuralEnrich)),neurEnrich = unlist(neuralEnrich),stringsAsFactors=F)
+moduleManifestCombined2b <- dplyr::left_join(moduleManifestCombined2b,tdf)
+
+
+#moduleManifestCombined2b <- dplyr::mutate(moduleManifestCombined2b,neuralEnrichment = unlist(neuralEnrich))
+
 astrocyteEnrich <- lapply(modulesLargeListHgnc,utilityFunctions::fisherWrapperPval,astrocyteList,masterGeneMap$external_gene_name)
+#moduleManifestCombined2b <- dplyr::mutate(moduleManifestCombined2b,astrocyteEnrichment = unlist(astrocyteEnrich))
+tdf <- data.frame(ModuleNameFull = names(unlist(astrocyteEnrich)),astroEnrich = unlist(astrocyteEnrich),stringsAsFactors=F)
+moduleManifestCombined2b <- dplyr::left_join(moduleManifestCombined2b,tdf)
+
 endothelialEnrich <- lapply(modulesLargeListHgnc,utilityFunctions::fisherWrapperPval,endothelialList,masterGeneMap$external_gene_name)
-
-rosmapModuleSummaryTable <- dplyr::mutate(rosmapModuleSummaryTable,microglialEnrichment = unlist(microglialEnrich))
-rosmapModuleSummaryTable <- dplyr::mutate(rosmapModuleSummaryTable,neuralEnrichment = unlist(neuralEnrich))
-rosmapModuleSummaryTable <- dplyr::mutate(rosmapModuleSummaryTable,astrocyteEnrichment = unlist(astrocyteEnrich))
-rosmapModuleSummaryTable <- dplyr::mutate(rosmapModuleSummaryTable,endothelialEnrichment = unlist(endothelialEnrich))
-View(rosmapModuleSummaryTable)
+#moduleManifestCombined2b <- dplyr::mutate(moduleManifestCombined2b,endothelialEnrichment = unlist(endothelialEnrich))
+tdf <- data.frame(ModuleNameFull = names(unlist(endothelialEnrich)),endoEnrich = unlist(endothelialEnrich),stringsAsFactors=F)
+moduleManifestCombined2b <- dplyr::left_join(moduleManifestCombined2b,tdf)
 
 
-rSynapseUtilities::makeTable(rosmapModuleSummaryTable,"rosmap module summaries","syn2370594")
+
+View(moduleManifestCombined2b)
+
+
+rSynapseUtilities::makeTable(moduleManifestCombined2b,"cross study analyses","syn2370594")
 rSynapseUtilities::makeTable(allMods,"rosmap modules","syn2370594")
-keepTab<-dplyr::filter(rosmapModuleSummaryTable,p.adjust(adGeneticEnrich,method='fdr')<=0.05)
-#p.adjust(rosmapModuleSummaryTable$adGeneticEnrich,method='fdr')
-rownames(keepTab) <- keepTab$module
-keepTab <- dplyr::select(keepTab,-size,-method,-module)
+
+keepTab<-dplyr::filter(moduleManifestCombined2b,p.adjust(adGeneticEnrich,method='fdr')<=0.01)
+View(keepTab)
+#p.adjust(moduleManifestCombined2b$adGeneticEnrich,method='fdr')
+rownames(keepTab) <- paste0(keepTab$ModuleNameFull,keepTab$brainRegionAssociation)
+keepTab <- dplyr::select(keepTab,-method,-Module,-brainRegion,-brainRegionAssociation,-ModuleNameFull,-ModuleName)
 
 keepTab2 <- keepTab<0.0001
-keepTab2[which(keepTab)] <- 1
-keepTab2[which(!keepTab)] <- 0
+keepTab2[which(keepTab==TRUE)] <- 1
 
-pheatmap::pheatmap((keepTab2),
+
+pheatmap::pheatmap(data.matrix(keepTab2),
                    cluster_rows=F,
                    cluster_cols=F)
