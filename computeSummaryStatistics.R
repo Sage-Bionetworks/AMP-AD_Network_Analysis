@@ -14,10 +14,19 @@ barplot(fooSummarize$numberOfGenes,
         ylab='Module Size')
 
 
-
-g <- ggplot2::ggplot(fooSummarize, ggplot2::aes(numberOfGenes,fill=method))
-g <- g + ggplot2::geom_bar(position="dodge")
+png(file='~/Desktop/sizeDistn.png',
+    height=800,
+    width=1200,
+    res=120,
+    pointsize = 30)
+g <- ggplot2::ggplot(fooSummarize, 
+                     ggplot2::aes(x=brainRegion,
+                                  y=numberOfGenes,
+                                  fill=method))
+g <- g + ggplot2::geom_boxplot(position='dodge')
+g <- g + ggplot2::scale_y_log10()
 g
+dev.off()
 #splitBr <- lapply(unique(allMods$brainRegion),function(x,y){
 #  return(dplyr::filter(y,brainRegion==x))
 #},allMods)
