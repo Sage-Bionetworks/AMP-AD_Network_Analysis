@@ -37,7 +37,7 @@ run_amp_ad_enrichment <- function(geneSetList,
   cat('running enrichments....\n')
   
   res <- list()
-  res$fisher <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapper,
+  res$fisher <- utilityFunctions::outerSapplyParallel(utilityFunctions::fisherWrapper,
                                             modulesLargeList,
                                             geneSetList,
                                             refGeneSet)
