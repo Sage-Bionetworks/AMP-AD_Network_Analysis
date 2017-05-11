@@ -32,21 +32,19 @@ run_amp_ad_enrichment <- function(geneSetList,
     unlist %>%
     unique
   
-  refGeneSet <- intersect(uniqueModuleList,
-                          uniqueGeneSet)
+  refGeneSet <- uniqueModuleList
   
   cat('running enrichments....\n')
   
   res <- list()
-  res$pval <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperPval,
+  res$fisher <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapper,
                                             modulesLargeList,
                                             geneSetList,
                                             refGeneSet)
-  
-  res$OR <- utilityFunctions::outerSapply(utilityFunctions::fisherWrapperOR,
-                                          modulesLargeList,
-                                          geneSetList,
-                                          refGeneSet)
+  res$pval <- res$fisher[which(1:nrow(res$fisher)%%2==1),]
+  rownames(res$pval) <- names(geneSetList)
+  res$OR <- res$fisher[which(1:nrow(res$fisher)%%2==0),]
+  rownames(res$OR) <- names(geneSetList)
   
   cat('producing tidy data frame....\n')
   
