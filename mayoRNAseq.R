@@ -25,11 +25,11 @@ write.csv(exprDataTCX,file='MayoRNAseq_TCX.csv',quote=F)
 write.csv(exprDataCER,file='MayoRNAseq_CER.csv',quote=F)
 
 #version comment
-commentTCX = "Mayo RNAseq TCX expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue for March 24 2017 Freeze of data reprocessing and normalization"
+commentTCX = "Mayo RNAseq TCX expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue for May 2017 Freeze of data reprocessing and normalization"
 
 foo = synapseClient::File('MayoRNAseq_TCX.csv',parentId='syn8257429',versionComment = commentTCX)
 
-bar2 = synapseClient::synGet('syn4650265',downloadFile=F)
+bar2 = synapseClient::synGet('syn8257627',downloadFile=F)
 anno = synapseClient::synGetAnnotations(bar2)
 
 #annotations
@@ -38,7 +38,7 @@ synapseClient::synSetAnnotations(foo) = as.list(anno)
 
 permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
                                ref = 'branch',
-                               refName = 'ben-patch-1',
+                               refName = 'module-comparisons',
                                repositoryPath = 'mayoRNAseq.R')
 
 #provenance and store
@@ -52,11 +52,11 @@ foo = synapseClient::synStore(foo,
 
 
 #version comment
-commentCER = "Mayo RNAseq CER expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue for March 24 2017 Freeze of data reprocessing and normalization"
+commentCER = "Mayo RNAseq CER expression data processed with the RNAseq reprocessing pipeline in the AMP-AD consortia for network analysis fixing previous issue for May 2017 Freeze of data reprocessing and normalization"
 
 foo = synapseClient::File('MayoRNAseq_CER.csv',parentId='syn8257427',versionComment = commentCER)
 
-bar2 = synapseClient::synGet('syn5201007',downloadFile=F)
+bar2 = synapseClient::synGet('syn8257637',downloadFile=F)
 anno = synapseClient::synGetAnnotations(bar2)
 
 #annotations
@@ -65,7 +65,7 @@ synapseClient::synSetAnnotations(foo) = as.list(anno)
 
 permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
                                ref = 'branch',
-                               refName = 'ben-patch-1',
+                               refName = 'module-comparisons',
                                repositoryPath = 'mayoRNAseq.R')
 
 #provenance and store
