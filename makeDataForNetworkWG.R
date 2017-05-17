@@ -10,12 +10,6 @@ winsorize <- function(x,per=.99){
 }
 
 
-#t1 <- as.numeric(listOfData[[1]][2,])
-#t2 <- winsorize(t1)
-#t3 <- t2
-#t3[is.na(t2)] <- mean(t2,na.rm=T)
-#t4 <- scale(t3)
-
 winsorizeAndScale <- function(x){
   library(dplyr)
   replaceNaMean <- function(x){
@@ -75,7 +69,7 @@ reformattedData <- lapply(listOfData2,winsorizeAndScale)
 
 library(dplyr)
 
-fileNames <- paste0('Scaled_Winsorized_',foo$file.name)
+fileNames <- paste0('Scaled_Winsorized_',foo$name)
 parentIds <- sapply(bar,function(x){return(x@properties$parentId)})
 annotations <- sapply(bar,function(x){return(synGetAnnotations(x))})
 comments <- rep('Winsorizing and scaling',7)
