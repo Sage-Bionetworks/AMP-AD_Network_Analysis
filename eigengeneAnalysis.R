@@ -160,6 +160,14 @@ moduleManifestCombined3 <- moduleManifestCombined2
 rSynapseUtilities::makeTable(moduleManifestCombined3,'cross study eigengene analysis','syn2370594')
 
 
+
+
+
+
+
+
+
+
 aggregated20 <- dplyr::group_by(dplyr::select(moduleManifestCombined3,ModuleNameFull,eigengeneAggregate),ModuleNameFull)
 aaa1<-dplyr::summarise(aggregated20,a = sum(-log(eigengeneAggregate)))
 
