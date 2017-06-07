@@ -19,21 +19,43 @@ rosmapClinical <- dplyr::select(rosmapClinical,-V1,-age_death,-age_first_ad_dx,-
 ####read in uncensored age file
 rosmapUncensoredAges <- data.table::fread(synapseClient::getFileLocation(rosmapUncensoredAgesObj),
                                           data.table=F)
-View(rosmapUncensoredAges)
+#View(rosmapUncensoredAges)
 
 ####merge uncensored ages with clinical file
 rosmapClinical <- dplyr::left_join(rosmapClinical,rosmapUncensoredAges,by='projid')
-View(rosmapClinical)
+#View(rosmapClinical)
 
 ###cognitive decline
 rosmapCogDec1 <- data.table::fread(synapseClient::getFileLocation(rosmapCogDecline1Obj),
                                    data.table=F)
 rosmapCogDec1 <- dplyr::select(rosmapCogDec1,-Sample)
-View(rosmapCogDec1)
-rosmapClinical <- dplyr::left_join(rosmapClinical,
-                                   rosmapCogDec1,
-                                   by=c("projid"="ProjectID"))
 
+rosmapCogDec2 <- data.table::fread(synapseClient::getFileLocation(rosmapCogDecline2Obj),
+                                   data.table=F)
+
+mungeIds <- function(x){
+  #ros or map
+  isROS<-grep('ROS',x)
+  isMAP<-grep('MAP',x)
+  if(length(isROS)>0){
+    rosId<-strsplit(x,'ROS')[[1]][2]
+    return(as.numeric(rosId))
+  }else if(length(isMAP)>0){
+    mapId <- strsplit(x,'MAP')[[1]][2]
+    return(as.numeric(mapId))
+  }else{
+    return(as.numeric(x))
+  }
+}
+projids2 <- sapply(rosmapCogDec2$CollaboratorParticipantId,mungeIds)
+rosmapCogDec2$ProjectID <- projids2
+rosmapCogDec2 <- dplyr::select(rosmapCogDec2,ProjectID,cogn_global_slope)
+rosmapCogDec <- rbind(rosmapCogDec1,rosmapCogDec2)
+
+#View(rosmapCogDec1)
+rosmapClinical <- dplyr::left_join(rosmapClinical,
+                                   rosmapCogDec,
+                                   by=c("projid"="ProjectID"))
 rosmapClinical$apoe_genotype <- as.factor(rosmapClinical$apoe_genotype)
 rosmapClinical$ceradsc <- as.factor(rosmapClinical$ceradsc)
 rosmapClinical$braaksc <- as.factor(rosmapClinical$braaksc)
@@ -41,6 +63,7 @@ rosmapClinical$cogdx <- as.factor(rosmapClinical$cogdx)
 ####simple tests
 lmObj <- lm(cogn_global_slope ~ age_death+ceradsc+braaksc+cogdx+apoe_genotype,data = rosmapClinical)
 summary(lmObj)
+eff1<-effects::allEffects(lmObj)
 
 library(dplyr)
 KEY <- read.csv(synapseClient::getFileLocation(rosmapIdMapObj))%>%
@@ -62,8 +85,13 @@ expressionData$aSampleId <- rownames(expressionData)
 expressionData <- dplyr::left_join(expressionData,KEY,by=c('aSampleId'='Sampleid'))
 combinedData <- dplyr::left_join(expressionData,rosmapClinical,by='projid')
 
-lmObj <- lm(cogn_global_slope ~ age_death+ceradsc+braaksc+cogdx+apoe_genotype+ENSG00000182621,data = combinedData)
-summary(lmObj)
+
+
+unlist(test11)
+names(baz4[[1]])
+
+#lmObj <- lm(cogn_global_slope ~ age_death+ceradsc+braaksc+cogdx+apoe_genotype+ENSG00000182621,data = combinedData)
+#summary(lmObj)
 load(synapseClient::getFileLocation(rosmapMetanetworkObj))
 
 rosmap <- igraph::graph_from_adjacency_matrix(bicNetworks$network,
@@ -74,18 +102,83 @@ degree2 <- dplyr::arrange(degree2,desc(degree))
 degree2[1:5,]
 
 foobar <- model.matrix(~1 + age_death+ceradsc+braaksc+cogdx+apoe_genotype,data=combinedData)
+foobar2 <- model.matrix(~1,data=combinedData)
 a1 <-which(is.na(combinedData$cogn_global_slope))
 foobar <- foobar[-a1,]
+foobar2 <- foobar2[-a1,]
 combinedData <- combinedData[-a1,]
 
+
+expressionHarmonized <- dplyr::select(combinedData,starts_with("ENSG"))
+
+var2b <- utilityFunctions::varCompWrapperFunction(outcome=combinedData$cogn_global_slope,
+                                                  fixed = foobar2,
+                                                  randomFeatures=expressionHarmonized)
+var1b <- utilityFunctions::varCompWrapperFunction(outcome=combinedData$cogn_global_slope,
+                                                  fixed = foobar,
+                                                  randomFeatures = expressionHarmonized)
+
+barplot(c(var2b$percentVarianceExplained,var1b$percentVarianceExplained),
+        col=c('red','blue'),
+        names.arg=c('~1','~1+age+cerad+braak+cogdx+apoe'),
+        xlab='model',
+        ylab='% variation explained',
+        main='% variation explained for rate of cog decline by expression',
+        ylim=c(0,0.5))
+text(c(.7,1.9),c(0.48,0.1),c('p<1e-16','p=0.03'))
+#utilityFunctions::varCompWrapperFunction()
+load('rosmapMods.rda')
+#module109genes <- synapseClient::synTableQuery("SELECT geneName FROM syn5321231 where speakeasyModule=109")@values
+#baz4[[1]]$module109 <- unique(module109genes$geneName)
+getVariance <- function(moduleGenes,combinedData1,fixedData1){
+  foo1 <- utilityFunctions::varCompWrapperFunction(outcome=combinedData1$cogn_global_slope,
+                                                   fixed = fixedData1,
+                                                   randomFeatures = combinedData1[,which(colnames(combinedData1)%in%moduleGenes)])
+  return(unlist(foo1))
+}
+test11 <- sapply(abcd[[3]],getVariance,combinedData1=combinedData,fixedData1=foobar2)
+test11 <- t(test11)
+test11 <- data.frame(test11,stringsAsFactors=F)
+test11$module <- rownames(test11)
+test11 <- dplyr::arrange(test11,pvalue)
+test11$fdr <- p.adjust(test11$pvalue,method='fdr')
+View(test11)
+
+multiModelKernels <- function(geneList,x){
+  return(cor(t(x[,geneList]),use = 'pairwise.complete.obs'))
+}
+getKernels <- lapply(baz4[[1]],multiModelKernels,combinedData)
+
+fullMod <- varComp::varComp(combinedData$cogn_global_slope ~ foobar,varcov=cor(t(scale(expressionHarmonized))))
+fullMod <- varComp::varComp(combinedData$cogn_global_slope ~ foobar-1,varcov=getKernels)
+
+test111 <- test11[-which(test11$module=="module109"),]
+View(test111)
+par(mar=c(6,4,4,4))
+barplot(test111$percentVarianceExplained*100,
+        names.arg = test111$module,
+        col = test111$module,
+        xlab='module',
+        ylab='% variation explained',
+        main='rate of cognitive decline',
+        las=2,
+        ylim=c(0,6.2))
+text("***",x = (c(1,2,3,4,5)-.5+(1:5)*.2),y=test111$percentVarianceExplained[1:5]*100+.2)
+legend('topright',c("*** FDR<=0.05"),cex=.75,box.lty=0)
+
+gap::qqunif(test11[,'pvalue'])
 
 lmFun <- function(x,y,z){
   lmObj <- lm(y~x+z-1)
   return(summary(lmObj)$coef[1,4])
 }
-expressionHarmonized <- dplyr::select(combinedData,starts_with("ENSG"))
+
 #expressionHarmonized <- expressionHarmonized[-a1,]
-foo2 <- apply(expressionHarmonized,2,lmFun,y=as.matrix(combinedData$cogn_global_slope),z=foobar)
+foo2 <- apply(expressionHarmonized,
+              2,
+              lmFun,
+              y=as.matrix(combinedData$cogn_global_slope),
+              z=foobar)
 #nullModel <- utilityFunctions::varCompWrapperFunction(outcome=scale(combinedData$cogn_global_slope),
 #                                                     features=data.matrix(foobar))
 
