@@ -25,12 +25,14 @@ GetUnionGenes <- function(ModuleList, manifestId = "syn9770791"){
   
   cat('pulling modules...\n')
   ModList <- list()
-  for(i in length(ModuleList))
+  for(i in 1:length(ModuleList))
   {
+    cat('Loading module ',i,' of ',length(ModuleList),'\n')  
     temp <- synapseClient::synTableQuery(
       paste0("SELECT GeneID FROM ",manifestId," WHERE ModuleNameFull = ",
              "\'",ModuleList[i],"\'", sep= ""))@values
-  ModList <- append(ModList, temp)  
+
+    ModList <- append(ModList, temp$GeneID)  
     
   }
   
