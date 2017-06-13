@@ -38,20 +38,26 @@ GenGraphViz <- function(x, pattern, Types,
   #coloring nodes on the basis of module type 
   cmap <- rainbow(l, alpha=1) 
   V(net)$color <- cmap[V(net)$ModType]
-  deg <- strength(net)
+  deg <- 1/(1e-50 + strength(net))
   V(net)$size <- sizeMin + deg/max(deg)*sizeMax
+  l <- layout_with_fr(net, niter = 5000, grid = 'nogrid')
   plot(net, edge.arrow.size=.4,vertex.label=NA,  
-       layout=layout_with_fr(net, niter = 5000, grid = 'nogrid'))
+       layout=l)
   legend(x=-1.5, y=-1.1,Types,pch=21,col="#777777", pt.bg=cmap,
          pt.cex=2, cex=.8, bty="n", ncol=1)
   
-  #returning igraph object 
-  return(net)
+  #returning igraph object and layout
+  RetDat <- list()
+  RetDat$net <- net 
+  RetDat$l <- l 
+  return(RetDat)
+  
+  
 }
 
 
 
-GenClusteredViz <- function(Net){
+GenClusteredViz <- function(Net,l){
   
   #loading libraries 
   library(igraph)
@@ -74,8 +80,9 @@ GenClusteredViz <- function(Net){
   
   #generating the plot 
   print('Generating the plot')
-  plot(Net, edge.arrow.size=.4,vertex.label=NA,
-       layout=layout_with_fr(Net, niter = 5000, grid = 'nogrid'))
+  #plot(Net, edge.arrow.size=.4,vertex.label=NA,
+   #    layout=layout_with_fr(Net, niter = 5000, grid = 'nogrid'))
+  plot(Net, edge.arrow.size=.4,vertex.label=NA, layout = l)
   
   #adding legend 
   LegendNames <- c(1:Clusts$K)

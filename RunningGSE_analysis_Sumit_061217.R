@@ -17,11 +17,13 @@ pattern <- "DLPFC"
 Types <- c('consen','megen','metan','speakE','wina')
 
 #5. Visualize modules colored by algorithm type
-Net <- GenGraphViz(Dat,pattern, Types)
+RetGraph <- GenGraphViz(Dat,pattern, Types)
+Net <- RetGraph$net 
+l <- RetGraph$l 
 
 #6. Visualize modules colored by clusters obtained by 
 #graph clustering using markov clustering 
-ClustResults <- GenClusteredViz(Net)
+ClustResults <- GenClusteredViz(Net,l)
 
 #7. Log into Synapse 
 synapseClient::synapseLogin()
