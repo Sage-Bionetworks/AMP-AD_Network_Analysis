@@ -97,3 +97,33 @@ GenClusteredViz <- function(Net,l){
   return(ClustResults)
   
 }
+
+PlotGraphGivenLabels <- function(Net,l,Labels, SizeList = c(),
+                                 sizeMin = 3, sizeMax = 20){
+  
+  cmap <- rainbow(max(Labels), alpha=1)
+  for( i in 1:max(Labels)){
+    cat('No. of modules in cluster',i,'is =',
+        sum(Labels==i),'\n')
+  }  
+  
+  V(Net)$color <- cmap[Labels]
+  
+  if (length(SizeList)>0){
+    V(net)$size <- sizeMin + SizeList/max(SizeList)*sizeMax
+  }
+
+  #generating the plot 
+  print('Generating the plot')
+  #plot(Net, edge.arrow.size=.4,vertex.label=NA,
+  #    layout=layout_with_fr(Net, niter = 5000, grid = 'nogrid'))
+  plot(Net, edge.arrow.size=.4,vertex.label=NA, layout = l)
+  
+  #adding legend 
+  LegendNames <- c(1:max(Labels))
+  legend(x=-1.5, y=-1.1,LegendNames,pch=21,col="#777777", pt.bg=cmap,
+         pt.cex=2, cex=.8, bty="n", ncol=6)
+  
+  return(Net)  
+  
+}
