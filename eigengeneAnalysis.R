@@ -1,4 +1,4 @@
-source('loadAMPADModules.R')
+#source('loadAMPADModules.R')
 source('pullExpressionAndPheno.R')
 ###get all modules from synapse now stored in allMods
 allMods <- synapseClient::synTableQuery("SELECT * FROM syn9770791")@values
@@ -64,6 +64,12 @@ logisticRegressionAggregatePval <- function(x,y){
   return(pchisq(lrt,1,lower.tail=F))
 }
 
+logisticRegressionOddsRatio <- function(x,y){
+  y <- as.numeric(data.matrix(y))
+  glmmod <- glm(y~x,family='binomial')
+  return(summary(glmmod)$coef[2,1])
+}
+
 wrapperFxn1 <- function(diagnosis,eigengenes){
   library(dplyr)
   wrapperFxn2 <- function(eigengenes,diagnosis){
@@ -77,10 +83,51 @@ wrapperFxn1 <- function(diagnosis,eigengenes){
   lapply(eigengenes,wrapperFxn2,diagnosis) %>% return
 }
 
+wrapperFxn3 <- function(diagnosis,eigengenes){
+  library(dplyr)
+  wrapperFxn4 <- function(eigengenes,diagnosis){
+    library(dplyr)
+    if(!is.na(eigengenes)){
+      eigengenes = scale(eigengenes)
+      apply(eigengenes,2,logisticRegressionOddsRatio,diagnosis) %>% return
+    }else{
+      return(NA)
+    }
+  }
+  lapply(eigengenes,wrapperFxn4,diagnosis) %>% return
+}
+
+wrapperFxn5 <- function(diagnosis,eigengenes){
+  library(dplyr)
+  wrapperFxn6 <- function(eigengenes,diagnosis){
+    library(dplyr)
+    if(!is.na(eigengenes)){
+      #eigengenes = scale(eigengenes)
+      cor(eigengenes,diagnosis,use = 'pairwise.complete.obs') %>% c %>% return
+    }else{
+      return(NA)
+    }
+  }
+  res <- lapply(eigengenes,wrapperFxn6,diagnosis)
+  names(res) <- names(eigengenes)
+  return(res)
+}
+
+
 ModulePvalues <- mapply(wrapperFxn1,
                         adDiagnosis,
                         test11,
                         SIMPLIFY = F)
+
+ModuleOddsRatios <- mapply(wrapperFxn3,
+                           adDiagnosis,
+                           test11,
+                           SIMPLIFY= F)
+
+ModuleCorrelations <- mapply(wrapperFxn5,
+                             adDiagnosis,
+                             test11,
+                             SIMPLIFY = F)
 
 fisherWrapper <- function(pvalues){
   fisherFxn <- function(x){
@@ -113,17 +160,42 @@ moduleManifest <- dplyr::inner_join(moduleManifest,
                                     by=c('ModuleNameFull'))
 moduleManifest <- moduleManifest[which(!duplicated(moduleManifest)),]
 
-buildSingleManifest <- function(pvalList,modMani){
+buildSingleManifest <- function(pvalList,orList,corList,modMani){
   foo <- data.frame(pvalList,stringsAsFactors=F)
   foo <- t(foo)
-  colnames(foo) <- paste0('eigengene',1:5)
+  colnames(foo) <- paste0('eigengene',1:5,'pval')
   foo <- data.frame(foo,stringsAsFactors=F)
   foo$ModuleNameFull <- rownames(foo)
+  print(foo[1:5,])
+  
+  foo_or <- data.frame(orList,stringsAsFactors = F)
+  foo_or <- t(foo_or)
+  colnames(foo_or) <- paste0('eigengene',1:5,'OR')
+  foo_or <- data.frame(foo_or,stringsAsFactors=F)
+  foo_or$ModuleNameFull <- rownames(foo_or)
+  print(foo_or[1:5,])
+  
+  foo_cor <- data.frame(corList,stringsAsFactors = F)
+  foo_cor <- t(foo_cor)
+  colnames(foo_cor) <- paste0('eigengene',1:5,'cor')
+  foo_cor <- data.frame(foo_cor,stringsAsFactors=F)
+  foo_cor$ModuleNameFull <- rownames(foo_cor)
+  print(foo_cor[1:5,])
+  
   foo <- dplyr::inner_join(modMani,foo)
+  print(foo[1:5,])
+  foo <- dplyr::inner_join(foo,foo_or)
+  print(foo[1:5,])
+  foo <- dplyr::inner_join(foo,foo_cor)
+  print(foo[1:5,])
   return(foo)
 }
 
-moduleManifestList <- lapply(ModulePvalues,buildSingleManifest,moduleManifest)
+moduleManifestList <- mapply(buildSingleManifest,
+                             ModulePvalues,
+                             ModuleOddsRatios,
+                             ModuleCorrelations,
+                             MoreArgs = list(modMani=moduleManifest),SIMPLIFY=F)
 
 moduleManifestList <- mapply(function(x,y){
   x <- dplyr::mutate(x,brainRegionAssociation = y)
@@ -141,8 +213,13 @@ fisherFxn <- function(x){
     return
 }
 
-moduleManifestCombined <- do.call(rbind,
-                                  moduleManifestList)
+moduleManifestListCollapsed <- do.call(rbind,moduleManifestList)
+notmissing <- which(rowSums(is.na(moduleManifestListCollapsed))==0)
+moduleManifestListCollapsed <- moduleManifestListCollapsed[notmissing,]
+rSynapseUtilities::makeTable(moduleManifestListCollapsed,'cross study eigengene p-values, odds ratios, pearson cor','syn2370594')
+
+#moduleManifestCombined <- do.call(rbind,
+#                                  moduleManifestList)
 
 foo3 <- dplyr::select(moduleManifestCombined,dplyr::starts_with("eigengene"))
 aggPval <- apply(foo3,1,fisherFxn)
