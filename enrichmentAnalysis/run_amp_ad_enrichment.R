@@ -1,6 +1,7 @@
 #########run enrichment function for manifest
 run_amp_ad_enrichment <- function(geneSetList,
                                   geneSetName,
+                                  hgnc = TRUE,
                                   manifestId = "syn9770791"){
   
   #INPUT:
@@ -22,10 +23,17 @@ run_amp_ad_enrichment <- function(geneSetList,
     return(unique(y[which(z==x)]))
   }
   cat('building module gene sets...\n')
-  modulesLargeList <- lapply(unique(allMods$ModuleNameFull),
-                             listify,
-                             allMods$external_gene_name,
-                             allMods$ModuleNameFull)
+  if(hgnc){
+    modulesLargeList <- lapply(unique(allMods$ModuleNameFull),
+                               listify,
+                               allMods$external_gene_name,
+                               allMods$ModuleNameFull)
+  }else{
+    modulesLargeList <- lapply(unique(allMods$ModuleNameFull),
+                               listify,
+                               allMods$GeneID,
+                               allMods$ModuleNameFull)
+  }
   names(modulesLargeList) <- unique(allMods$ModuleNameFull)
   cat('removing genes that are not relevant from reference set...\n')
   #get unique gene keys,drop categories in both cases that are 0 in size
