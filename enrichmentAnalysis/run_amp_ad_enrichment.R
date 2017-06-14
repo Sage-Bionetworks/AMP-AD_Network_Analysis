@@ -7,6 +7,7 @@ run_amp_ad_enrichment <- function(geneSetList,
   #INPUT:
   #geneSetList - a list of genes in hgnc format
   #geneSetName - the names of the geneSets
+  #hgnc - boolean indicating whether the gene identifiers are hgnc (TRUE) or ensembl (FALSE)
   #manifestId - location of a synapse table with the modules definitions in terms of hgnc names
   library(dplyr)
   cat('logging into Synapse...\n')
