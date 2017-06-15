@@ -11,7 +11,7 @@ Dat <- read.csv('Job-38889986948603617091033777.csv')
 Dat <- data.frame(Dat)
 
 #3. Specify the region of the brain to visualize 
-pattern <- "DLPFC"
+pattern <- "CER"
 
 #4. Specify the algorithms to consider 
 Types <- c('consen','megen','metan','speakE','wina')
@@ -28,13 +28,23 @@ ClustResults <- GenClusteredViz(Net,l)
 #7. Log into Synapse 
 synapseClient::synapseLogin()
 
-#Get all the modules in a cluster of interest 
+#8. Get all the modules in a cluster of interest 
 ModClust <- GetModulesInClust(V(Net)$name, 
                               ClustResults$Clusts$Cluster, 1)
 
-#Get all genes in the module set 
+#9. Get all genes in the module set 
 ClustGenes <- GetUnionGenes(ModClust)
 
+#10. Get all module names for a particular module type 
+PatternMod <- 'consen'
+In1 <- grep(PatternMod,V(Net)$name)
+ModNames <- V(Net)$name[In1]
+
+#11. CreateFile Gene set file for MAGMA 
+source('CreateMagmaFiles.R')
+OutputFileName <- 'MagmaModuleFile.txt'
+Create.MAGMA.GeneLists(ModNames, 
+                       OutputFileName = OutputFileName)
 
 
 
