@@ -42,9 +42,29 @@ ModNames <- V(Net)$name[In1]
 
 #11. CreateFile Gene set file for MAGMA 
 source('CreateMagmaFiles.R')
-OutputFileName <- 'MagmaModuleFile.txt'
-Create.MAGMA.GeneLists(ModNames, 
-                       OutputFileName = OutputFileName)
+#OutputFileName <- 'MagmaModuleFile.txt'
+#Create.MAGMA.GeneLists(ModNames, 
+#                       OutputFileName = OutputFileName)
 
+#12. Plot histogram of pValues 
+GWAS_enrich <- read.table('ModuleGSEA.sets.out', 
+                          skip = 3, header = T)
+xlab <- 'Modules'
+ylab <- '-log10(pval)'
+barplot(-log10(GWAS_enrich$P), xlab = xlab, ylab = ylab)
 
+#13. Find the most enriched module 
+Min_In <- which.min(GWAS_enrich$P)
+Min_mod <- as.vector(droplevels(GWAS_enrich$SET[Min_In]))
+
+#14. Get minimum SNP p-values for genes in this module 
+GenePvalList <- GWAS.Enrich.Modules(Min_mod, 
+                                    AnnotFile = 'testOut.genes.annot'
+                                    , GWAS_file = 'IGAP_stage_1.txt')
+
+#Find significant genes in the module 
+In_imp <- which(GenePvalList$Pval_min < 1e-5)
+GenePvalList$Genes[In_imp]
+  
+  
 
