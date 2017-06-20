@@ -5,8 +5,8 @@ run_amp_ad_enrichment <- function(geneSetList,
                                   manifestId = "syn9770791"){
   
   #INPUT:
-  #geneSetList - a list of genes in hgnc format
-  #geneSetName - the names of the geneSets
+  #geneSetList - a list of genes in hgnc or ensembl format
+  #geneSetName - name of geneset (should be a single character string)
   #hgnc - boolean indicating whether the gene identifiers are hgnc (TRUE) or ensembl (FALSE)
   #manifestId - location of a synapse table with the modules definitions in terms of hgnc names
   
