@@ -11,7 +11,7 @@ Dat <- read.csv('Job-38889986948603617091033777.csv')
 Dat <- data.frame(Dat)
 
 #3. Specify the region of the brain to visualize 
-pattern <- "CER"
+pattern <- "TCX"
 
 #4. Specify the algorithms to consider 
 Types <- c('consen','megen','metan','speakE','wina')
@@ -42,12 +42,12 @@ ModNames <- V(Net)$name[In1]
 
 #11. CreateFile Gene set file for MAGMA 
 source('CreateMagmaFiles.R')
-#OutputFileName <- 'MagmaModuleFile.txt'
-#Create.MAGMA.GeneLists(ModNames, 
-#                       OutputFileName = OutputFileName)
+OutputFileName <- 'MagmaModuleFileTCX.txt'
+Create.MAGMA.GeneLists(ModNames, 
+                       OutputFileName = OutputFileName)
 
 #12. Plot histogram of pValues 
-GWAS_enrich <- read.table('ModuleGSEA.sets.out', 
+GWAS_enrich <- read.table('ModuleGSEA_FP.log.sets.out', 
                           skip = 3, header = T)
 xlab <- 'Modules'
 ylab <- '-log10(pval)'
@@ -62,9 +62,22 @@ GenePvalList <- GWAS.Enrich.Modules(Min_mod,
                                     AnnotFile = 'testOut.genes.annot'
                                     , GWAS_file = 'IGAP_stage_1.txt')
 
-#Find significant genes in the module 
+#15. Find significant genes in the module 
 In_imp <- which(GenePvalList$Pval_min < 1e-5)
 GenePvalList$Genes[In_imp]
+
+#16. plotting bargraph of pvalues 
+barplot(-log10(GenePvalList$Pval_min))
+
+#17. Write to Rda file 
+GenePvalList$MagmaPval <- 
+  rep(GWAS_enrich$P[Min_In],length(GenePvalList$Pval_min))
+GenePvalList$ModuleName <- 
+  rep(Min_mod,length(GenePvalList$Pval_min))
+GeneFrame <- data.frame(GenePvalList)
+OutFile <- paste(c('./GeneSetResults/',Min_mod,'_GeneList.Rda'),collapse = '')
+save(GeneFrame, file = OutFile)
+
   
   
 

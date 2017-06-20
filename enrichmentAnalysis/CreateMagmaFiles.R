@@ -86,7 +86,7 @@ GWAS.Enrich.Modules <- function(ModName, AnnotFile, GWAS_file,
     cat('Gene',i,'of',length(GeneList),'...\n')
 
     In <- which(Temp %in% GeneList[i])
-    print(In)
+    #print(In)
 
     if(length(In)==0){
       next
@@ -99,7 +99,7 @@ GWAS.Enrich.Modules <- function(ModName, AnnotFile, GWAS_file,
 
     SNP_list <- DF2List(SNP_list)
 
-    cat('Converted to list \n')
+    #cat('Converted to list \n')
 
     #print(SNP_list)
     #Pval_In <- unlist(lapply(SNP_list, function(x) grep(x, GWAS_snp)))
@@ -108,7 +108,7 @@ GWAS.Enrich.Modules <- function(ModName, AnnotFile, GWAS_file,
     #print(Pval_temp)
 
     Pval_In <- Get.Min.PvalIn(SNP_list, GWAS_snp)
-    cat('Obtained index of minimum pval \n')
+    #cat('Obtained index of minimum pval \n')
     Pval_temp <- GWAS_pval[Pval_In]
 
     Pval_list[i] <- min(Pval_temp)
@@ -141,5 +141,31 @@ Get.Min.PvalIn <- function(SNP_list, GWAS_snp){
 
   return(Pval_In)
 
+
+}
+
+
+
+Gen.GSEA.DF <- function(GSE_file, AnnotFile, GWAS_file){
+
+  cat('Obtaining most enriched module in region .. \n')
+  GWAS_enrich <- read.table(GSE_file, skip = 3, header = T)
+
+  Min_In <- which.min(GWAS_enrich$P)
+  Min_mod <- as.vector(droplevels(GWAS_enrich$SET[Min_In]))
+
+  cat('Obtaining enriched genes in module .. \n')
+  GenePvalList <- GWAS.Enrich.Modules(Min_mod,
+    AnnotFile = AnnotFile, GWAS_file = GWAS_file)
+
+  GenePvalList$MagmaPval <- rep(GWAS_enrich$P[Min_In],
+    length(GenePvalList$Pval_min))
+  GenePvalList$ModuleName <- rep(Min_mod,
+    length(GenePvalList$Pval_min))
+  cat('Returning output data frame ..\n')
+
+  GeneFrame <- data.frame(GenePvalList)
+
+  return(GeneFrame)
 
 }
