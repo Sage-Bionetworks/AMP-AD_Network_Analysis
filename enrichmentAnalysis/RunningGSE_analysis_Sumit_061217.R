@@ -11,7 +11,7 @@ Dat <- read.csv('Job-38889986948603617091033777.csv')
 Dat <- data.frame(Dat)
 
 #3. Specify the region of the brain to visualize 
-pattern <- "DLPFC"
+pattern <- "TCX"
 
 #4. Specify the algorithms to consider 
 Types <- c('consen','megen','metan','speakE','wina')
@@ -28,13 +28,56 @@ ClustResults <- GenClusteredViz(Net,l)
 #7. Log into Synapse 
 synapseClient::synapseLogin()
 
-#Get all the modules in a cluster of interest 
+#8. Get all the modules in a cluster of interest 
 ModClust <- GetModulesInClust(V(Net)$name, 
                               ClustResults$Clusts$Cluster, 1)
 
-#Get all genes in the module set 
+#9. Get all genes in the module set 
 ClustGenes <- GetUnionGenes(ModClust)
 
+#10. Get all module names for a particular module type 
+PatternMod <- 'consen'
+In1 <- grep(PatternMod,V(Net)$name)
+ModNames <- V(Net)$name[In1]
 
+#11. CreateFile Gene set file for MAGMA 
+source('CreateMagmaFiles.R')
+OutputFileName <- 'MagmaModuleFileTCX.txt'
+Create.MAGMA.GeneLists(ModNames, 
+                       OutputFileName = OutputFileName)
 
+#12. Plot histogram of pValues 
+GWAS_enrich <- read.table('ModuleGSEA_FP.log.sets.out', 
+                          skip = 3, header = T)
+xlab <- 'Modules'
+ylab <- '-log10(pval)'
+barplot(-log10(GWAS_enrich$P), xlab = xlab, ylab = ylab)
+
+#13. Find the most enriched module 
+Min_In <- which.min(GWAS_enrich$P)
+Min_mod <- as.vector(droplevels(GWAS_enrich$SET[Min_In]))
+
+#14. Get minimum SNP p-values for genes in this module 
+GenePvalList <- GWAS.Enrich.Modules(Min_mod, 
+                                    AnnotFile = 'testOut.genes.annot'
+                                    , GWAS_file = 'IGAP_stage_1.txt')
+
+#15. Find significant genes in the module 
+In_imp <- which(GenePvalList$Pval_min < 1e-5)
+GenePvalList$Genes[In_imp]
+
+#16. plotting bargraph of pvalues 
+barplot(-log10(GenePvalList$Pval_min))
+
+#17. Write to Rda file 
+GenePvalList$MagmaPval <- 
+  rep(GWAS_enrich$P[Min_In],length(GenePvalList$Pval_min))
+GenePvalList$ModuleName <- 
+  rep(Min_mod,length(GenePvalList$Pval_min))
+GeneFrame <- data.frame(GenePvalList)
+OutFile <- paste(c('./GeneSetResults/',Min_mod,'_GeneList.Rda'),collapse = '')
+save(GeneFrame, file = OutFile)
+
+  
+  
 
