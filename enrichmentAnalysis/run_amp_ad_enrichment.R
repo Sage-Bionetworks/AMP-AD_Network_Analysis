@@ -118,7 +118,7 @@ run_amp_ad_enrichment_subset <- function(geneSetList,
   #data frame with module name, gene set name, p-value, and odds ratio of enrichment
   library(dplyr)
   cat('logging into Synapse...\n')
-  synapseClient::synapseLogin()
+  #synapseClient::synapseLogin()
   #grab module definitions
   cat('pulling modules...\n')
   allMods <- synapseClient::synTableQuery(paste0("SELECT * FROM ",manifestId,
@@ -210,7 +210,7 @@ Assign.Enriched.GS.Module <- function(DF){
   #get the unique module names in the dataframe
   ModNames <- unique(DF$ModuleNameFull)
 
-  EnrichCat <- rep('',length(ModNames))
+  
 
   RetVar <- list()
 
@@ -227,7 +227,7 @@ Assign.Enriched.GS.Module <- function(DF){
     RetVar$EnrichCat[i] <- DF$category[In_min]
 
     #Assign minimum Pval
-    RetVar$Pval <- DF$fisherPval[In_min]
+    RetVar$Pval[i] <- DF$fisherPval[In_min]
 
   }
 
