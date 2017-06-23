@@ -212,6 +212,8 @@ Assign.Enriched.GS.Module <- function(DF){
 
   EnrichCat <- rep('',length(ModNames))
 
+  RetVar <- list()
+
   for (i in 1:length(ModNames)){
 
     #Find all indices for this module
@@ -220,11 +222,15 @@ Assign.Enriched.GS.Module <- function(DF){
     #Get the index of the minimum p-value
     In_min <- In[which.min(DF$fisherPval[In])]
 
+
     #Assign enrichment set to the module
-    EnrichCat[i] <- DF$category
+    RetVar$EnrichCat[i] <- DF$category[In_min]
+
+    #Assign minimum Pval
+    RetVar$Pval <- DF$fisherPval[In_min]
 
   }
 
-  return(DF)
+  return(RetVar)
 
 }
