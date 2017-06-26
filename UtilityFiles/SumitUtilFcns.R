@@ -33,7 +33,7 @@ makeTable <- function(df,tableName,projectId){
 
 
 Create.GeneSet.List <- function(Gene_file){
-
+  library(stringr)
   con <- file(Gene_file, open = 'r')
 
   GeneList <- list()
@@ -41,9 +41,10 @@ Create.GeneSet.List <- function(Gene_file){
   cnt <- 1
   while(length(oneLine <- readLines(con, n = 1, warn = F))>0){
     tmp <- unlist(strsplit(oneLine, split = "\t"))
-    tempStr <- paste(c('GeneList$mod',cnt,'<- tmp[3:length(tmp)]'),
-    collapse = '')
-    cnt <- cnt + 1
+    tempStr <- paste(c('GeneList$\"',
+    str_replace_all(tmp[1], "[^[:alnum:]]","")
+    ,'\" <- tmp[3:length(tmp)]'),collapse = '_')
+    #cnt <- cnt + 1
     #print(tempStr)
     #GeneList$tmp[1] <- tmp[3:length(tmp)]
     eval(parse(text = tempStr))
