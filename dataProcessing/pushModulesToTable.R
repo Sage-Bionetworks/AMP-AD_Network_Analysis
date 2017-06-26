@@ -24,16 +24,20 @@ pullAndReformat <- function(manifest){
   colnames(modules$speakEasy) <- c('Gene.ID','Module')
   colnames(modules$kmeans)[1:2] <- c('Gene.ID','Module')
   modules$kmeans <- dplyr::select(modules$kmeans,-moduleLabel)
+
+  modules$rWGCNA <- dplyr::select(modules$rWGCNA,V1,moduleColors.cons)
+  colnames(modules$rWGCNA) <- c('Gene.ID','Module')
   
   colnames(modules$megena)[1:2] <- c('Gene.ID','Module')
+  modules$megena <- dplyr::select(modules$megena,-is.hub)
   modules$wina <- dplyr::select(modules$wina,Geneid,module)
   colnames(modules$wina)[1:2] <- c('Gene.ID','Module')
   tidyDf <- mapply(function(x,y){
-    return(cbind(x,rep(y,nrow(x))))
-  },
-  modules,
-  names(modules),
-  SIMPLIFY=FALSE)
+      return(cbind(x,rep(y,nrow(x))))
+      },
+    modules,
+    names(modules),
+    SIMPLIFY=FALSE)
   tidyDf <- do.call(rbind,tidyDf)
   colnames(tidyDf)[3] <- 'method'
   
