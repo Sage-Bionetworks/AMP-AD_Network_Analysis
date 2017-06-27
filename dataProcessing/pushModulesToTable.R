@@ -1,4 +1,10 @@
-brainRegion <- 'dorsolateralPrefrontalCortex'
+brainRegion <- c('dorsolateralPrefrontalCortex',
+                 'cerebellum',
+                 'temporalCortex',
+                 'frontalPole',
+                 'inferiorFrontalGyrus',
+                 'parahippocampalGyrus',
+                 'superiorTemporalGyrus')
 grabCurrentModuleManifest <- function(brainRegion){
   synapseClient::synapseLogin()
   regularModuleQuery <- paste0("SELECT * FROM syn8681664 WHERE ( ( study = 'MSBB' OR study = 'MayoRNAseq' OR study = 'ROSMAP' ) AND ( analysisType = 'moduleIdentification' ) AND ( method = 'wina' OR method = 'speakeasy' OR method = 'megena' OR method = 'rWGCNA' ) AND (tissueOfOrigin = '",brainRegion,"') AND (columnScaled = 'TRUE') )")
@@ -54,5 +60,24 @@ pullAndReformat <- function(manifest){
   return(tidyDf)
 }
 
-test1<-grabCurrentModuleManifest(brainRegion=brainRegion)
-#View(foo@values)
+mods <- list()
+mods$dlpfc <- grabCurrentModuleManifest(brainRegion[1]) %>% pullAndReformat
+mods$cbe <- grabCurrentModuleManifest(brainRegion[2]) %>% pullAndReformat
+mods$tcx <- grabCurrentModuleManifest(brainRegion[3]) %>% pullAndReformat
+mods$fp <- grabCurrentModuleManifest(brainRegion[4]) %>% pullAndReformat
+mods$ifg <- grabCurrentModuleManifest(brainRegion[5]) %>% pullAndReformat
+mods$phg <- grabCurrentModuleManifest(brainRegion[6]) %>% pullAndReformat
+mods$stg <- grabCurrentModuleManifest(brainRegion[7]) %>% pullAndReformat
+
+#mods <- do.call(rbind,mods)
+addBrainRegionFxn <- function(x,y){
+  x$brainRegion <- rep(y,nrow(x))
+  return(x)
+}
+
+mods2 <- mapply(addBrainRegionFxn,
+                mods,
+                names(mods)%>%toupper,
+                SIMPLIFY=F)
+allMods <- do.call(rbind,mods2)
+allMods$ModuleNameFull <- paste0(allMods$ModuleName,allMods$brainRegion)
