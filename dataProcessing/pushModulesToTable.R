@@ -81,3 +81,4 @@ mods2 <- mapply(addBrainRegionFxn,
                 SIMPLIFY=F)
 allMods <- do.call(rbind,mods2)
 allMods$ModuleNameFull <- paste0(allMods$ModuleName,allMods$brainRegion)
+rSynapseUtilities::makeTable(allMods,'full individual module manifest June 26 2017','syn2370594')
