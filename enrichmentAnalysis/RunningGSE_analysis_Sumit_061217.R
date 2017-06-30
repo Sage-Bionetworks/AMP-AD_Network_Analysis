@@ -11,10 +11,12 @@ Dat <- read.csv('Job-38889986948603617091033777.csv')
 Dat <- data.frame(Dat)
 
 #3. Specify the region of the brain to visualize 
-pattern <- "TCX"
+pattern <- "CER"
 
 #4. Specify the algorithms to consider 
 Types <- c('consen','megen','metan','speakE','wina')
+#Types <- c('consen')
+
 
 #5. Visualize modules colored by algorithm type
 RetGraph <- GenGraphViz(Dat,pattern, Types)
@@ -36,13 +38,14 @@ ModClust <- GetModulesInClust(V(Net)$name,
 ClustGenes <- GetUnionGenes(ModClust)
 
 #10. Get all module names for a particular module type 
-PatternMod <- 'consen'
-In1 <- grep(PatternMod,V(Net)$name)
+PatternMod <- 'megen'
+In1 <- grep(PatternMod,names(V(Net)))
 ModNames <- V(Net)$name[In1]
 
 #11. CreateFile Gene set file for MAGMA 
 source('CreateMagmaFiles.R')
-OutputFileName <- 'MagmaModuleFileTCX.txt'
+OutputFileName <- 
+  './GWAS_files/CER_genesets/MagmaModuleFileCER_megena.txt'
 Create.MAGMA.GeneLists(ModNames, 
                        OutputFileName = OutputFileName)
 

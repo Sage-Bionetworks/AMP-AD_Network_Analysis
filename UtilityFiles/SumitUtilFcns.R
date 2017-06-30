@@ -59,3 +59,39 @@ Create.GeneSet.List <- function(Gene_file){
 
 
 }
+
+
+
+
+
+AssignEnrichedModule <- function(EnrichedList,SetName = c()){
+
+  if (length(SetName)>0){
+    Dat <- EnrichedList[[SetName]]
+  } else {
+    Dat <- EnrichedList
+  }
+
+  UnqMod <- unique(Dat$ModuleNameFull)
+
+  CatList <- rep('',length(UnqMod))
+  FisherOR <- rep(0,length(UnqMod))
+  Pval <- rep(0,length(UnqMod))
+
+  for (i in 1:length(UnqMod)){
+    In <- which(Dat$ModuleNameFull %in% UnqMod[i])
+    CatList[i] <- Dat$category[which.min(Dat$fisherPval[In])]
+    Pval[i] <- Dat$fisherPval[which.min(Dat$fisherPval[In])]
+    FisherOR[i] <- Dat$fisherOR[which.min(Dat$fisherPval[In])]
+
+  }
+
+  RetVar <- list()
+  RetVar$UnqMod <- UnqMod
+  RetVar$CatList <- CatList
+  RetVar$Pval <- Pval
+  RetVar$FisherOR <- FisherOR
+
+
+  return(RetVar)
+}
