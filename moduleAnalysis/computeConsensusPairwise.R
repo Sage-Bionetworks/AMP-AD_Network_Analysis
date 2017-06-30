@@ -19,10 +19,8 @@ dlpfc <- dplyr::filter(dlpfc,p.adjust(dlpfc$fisherPval,method='fdr')<=0.05)
 whichSelf <- which(dlpfc$ModuleNameFull!=dlpfc$category)
 dlpfc <- dlpfc[whichSelf,]
 dlpfc_igraph <- igraph::graph_from_edgelist(as.matrix(dlpfc[,c(1,2)]),directed=FALSE)
-
-fba<-igraph::as_adj(dlpfc_igraph)
-fba1 <- igraph::graph_from_adjacency_matrix(fba,mode='upper')
+dlpfc_igraph <- igraph::simplify(dlpfc_igraph)
 
 ###compute optimal community structure
 
-clust1 <- igraph::cluster_fast_greedy(fba1)
+clust1 <- igraph::cluster_optimal(dlpfc_igraph)
