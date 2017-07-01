@@ -79,5 +79,88 @@ write.csv(phgConsensus,file='phg.csv',quote=F)
 stgConsensus <- computeBrainRegionConsensus('STG','syn10146524')
 write.csv(stgConsensus,file='stg.csv',quote=F)
 
-
 #upload to synapse
+pushToSynapseWrapper <- function(df,
+                                 fileName,
+                                 synapseFolderId,
+                                 annos,
+                                 comment,
+                                 usedVector,
+                                 executedVector,
+                                 activityName1,
+                                 activityDescription1){
+  synapseClient::synapseLogin()
+  
+  #write df to file
+  write.csv(df,file=fileName,quote=F)
+  
+  #make File object (where it goes on synapse and comment)
+  foo <- synapseClient::File(fileName,
+                             parentId=synapseFolderId,
+                             versionComment=comment)
+  
+  #apply annotations
+  synapseClient::synSetAnnotations(foo) = as.list(annos)
+  
+  #push to synapse
+  foo = synapseClient::synStore(foo,
+                                used = as.list(usedVector),
+                                executed = as.list(executedVector),
+                                activityName = activityName1,
+                                activityDescription = activityDescription1)
+  
+  #return the synapse object
+  return(foo)
+}
+###read in from files into a list
+fileNames <- c('dlpfc.csv',
+               'cbe.csv',
+               'tcx.csv',
+               'fp.csv',
+               'ifg.csv',
+               'phg.csv',
+               'stg.csv')
+
+#change working directory
+setwd('~/AMP-AD_Network_Analysis/moduleAnalysis/')
+###modify so that it looks right
+modList <- lapply(fileNames,
+                  data.table::fread,
+                  data.table=F)
+modList <- lapply(modList,function(x) dplyr::select(x,-V1))
+###push to synapse using the above function
+mapply(pushToSynapseWrapper,
+       modList,
+       c('consensusDLPFC.csv',
+         'consensusCBE.csv',
+         'consensusTCX.csv',
+         'consensusFP.csv',
+         'consensusIFG.csv',
+         'consensusPHG.csv',
+         'consensusSTG.csv'),
+       as.list(rep('syn10158370',7)),
+       list(c('analysisType'='moduleIdentification',fileType='csv',assay='RNAseq',tissueOfOrigin='dorsolateralPrefrontalCortex',study='ROSMAP',summaryLevel='gene',organism='HomoSapiens',consortium='AMP-AD',dataType='analysis',tissueTypeAbrv='DLPFC',geneIdentifiers='Ensembl',method='consensusKmeans'),
+            c('analysisType'='moduleIdentification',fileType='csv',assay='RNAseq',tissueOfOrigin='cerebellum',study='MayoRNAseq',summaryLevel='gene',organism='HomoSapiens',consortium='AMP-AD',dataType='analysis',tissueTypeAbrv='CBE',geneIdentifiers='Ensembl',method='consensusKmeans'),
+            c('analysisType'='moduleIdentification',fileType='csv',assay='RNAseq',tissueOfOrigin='temporalCortex',study='MayoRNAseq',summaryLevel='gene',organism='HomoSapiens',consortium='AMP-AD',dataType='analysis',tissueTypeAbrv='TCX',geneIdentifiers='Ensembl',method='consensusKmeans'),
+            c('analysisType'='moduleIdentification',fileType='csv',assay='RNAseq',tissueOfOrigin='frontalPole',study='MSBB',summaryLevel='gene',organism='HomoSapiens',consortium='AMP-AD',dataType='analysis',tissueTypeAbrv='FP',geneIdentifiers='Ensembl',method='consensusKmeans'),
+            c('analysisType'='moduleIdentification',fileType='csv',assay='RNAseq',tissueOfOrigin='inferiorFrontalGyrus',study='MSBB',summaryLevel='gene',organism='HomoSapiens',consortium='AMP-AD',dataType='analysis',tissueTypeAbrv='IFG',geneIdentifiers='Ensembl',method='consensusKmeans'),
+            c('analysisType'='moduleIdentification',fileType='csv',assay='RNAseq',tissueOfOrigin='parahippocampalGyrus',study='MSBB',summaryLevel='gene',organism='HomoSapiens',consortium='AMP-AD',dataType='analysis',tissueTypeAbrv='PHG',geneIdentifiers='Ensembl',method='consensusKmeans'),
+            c('analysisType'='moduleIdentification',fileType='csv',assay='RNAseq',tissueOfOrigin='superiorTemporalGyrus',study='MSBB',summaryLevel='gene',organism='HomoSapiens',consortium='AMP-AD',dataType='analysis',tissueTypeAbrv='STG',geneIdentifiers='Ensembl',method='consensusKmeans')),
+       list('consensus module generation for rosmap dlpfc',
+            'consensus module generation for mayornaseq cbe',
+            'consensus module generation for mayornaseq tcx',
+            'consensus module generation for msbb fp',
+            'consensus module generation for msbb ifg',
+            'consensus module generation for msbb phg',
+            'consensus module generation for msbb stg'),
+       as.list(rep('syn10146524',7)),
+       rep(list(c('https://github.com/Sage-Bionetworks/AMP-AD_Network_Analysis/blob/9a4ebfd4993b5d3dd6709eda03131ca243cd72f8/moduleAnalysis/computeConsensusModules.R',
+                  'https://github.com/Sage-Bionetworks/metanetwork/blob/0e7a52e9401c9979632faf475fb3d9ad0249736c/R/findModules.consensusCluster.R')),7),
+       as.list(rep('consensus module construction',7)),
+       as.list(rep('consensus module building workflow',7)))
+###add a column for consensus
+
+###make schema correct, combine into a single data frame
+
+###upload to a consensus table for downstream analyses
+
