@@ -154,7 +154,7 @@ mapply(pushToSynapseWrapper,
             'consensus module generation for msbb phg',
             'consensus module generation for msbb stg'),
        as.list(rep('syn10146524',7)),
-       rep(list(c('https://github.com/Sage-Bionetworks/AMP-AD_Network_Analysis/blob/9a4ebfd4993b5d3dd6709eda03131ca243cd72f8/moduleAnalysis/computeConsensusModules.R',
+       rep(list(c('https://github.com/Sage-Bionetworks/AMP-AD_Network_Analysis/blob/1ed253dc8ecc7330237010a2b23698ac42cdb138/moduleAnalysis/computeConsensusModules.R',
                   'https://github.com/Sage-Bionetworks/metanetwork/blob/0e7a52e9401c9979632faf475fb3d9ad0249736c/R/findModules.consensusCluster.R')),7),
        as.list(rep('consensus module construction',7)),
        as.list(rep('consensus module building workflow',7)))
