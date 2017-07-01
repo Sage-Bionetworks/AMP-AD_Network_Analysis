@@ -56,17 +56,28 @@ computeBrainRegionConsensus <- function(brainRegion,
                                                    weightsItem = NULL, 
                                                    weightsFeature = NULL, 
                                                    corUse = "everything",
-                                                   verbose = F)
+                                                   verbose = F,
+                                                   useParallelFlag = T)
   
   # Find modularity quality metrics
   mod <- data.frame(mod,stringsAsFactors=F)
   parallel::stopCluster(cl)
   return(mod)
 }
-system.time(dlpfcConsensus <- computeBrainRegionConsensus('DLPFC','syn10146524'))
-#tcxConsensus <- computeBrainRegionConsensus('TCX','syn10146524')
-#cbeConsensus <- computeBrainRegionConsensus('CBE','syn10146524')
-#fpConsensus <- computeBrainRegionConsensus('FP','syn10146524')
-#ifgConsensus <- computeBrainRegionConsensus('IFG','syn10146524')
-#phgConsensus <- computeBrainRegionConsensus('PHG','syn10146524')
-#stgConsensus <- computeBrainRegionConsensus('STG','syn10146524')
+dlpfcConsensus <- computeBrainRegionConsensus('DLPFC','syn10146524')
+write.csv(dlpfcConsensus,file='dlpfc.csv',quote=F)
+tcxConsensus <- computeBrainRegionConsensus('TCX','syn10146524')
+write.csv(tcxConsensus,file='tcx.csv',quote=F)
+cbeConsensus <- computeBrainRegionConsensus('CBE','syn10146524')
+write.csv(cbeConsensus,file='cbe.csv',quote=F)
+fpConsensus <- computeBrainRegionConsensus('FP','syn10146524')
+write.csv(fpConsensus,file='fp.csv',quote=F)
+ifgConsensus <- computeBrainRegionConsensus('IFG','syn10146524')
+write.csv(ifgConsensus,file='ifg.csv',quote=F)
+phgConsensus <- computeBrainRegionConsensus('PHG','syn10146524')
+write.csv(phgConsensus,file='phg.csv',quote=F)
+stgConsensus <- computeBrainRegionConsensus('STG','syn10146524')
+write.csv(stgConsensus,file='stg.csv',quote=F)
+
+
+#upload to synapse
