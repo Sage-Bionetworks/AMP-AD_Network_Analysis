@@ -1,6 +1,6 @@
-computeBrainRegionConsensus(brainRegion,
-                            manifestId,
-                            seed=5){
+computeBrainRegionConsensus <- function(brainRegion,
+                                        manifestId,
+                                        seed=5){
   set.seed(seed)
   
   nc = parallel::detectCores()
@@ -42,7 +42,7 @@ computeBrainRegionConsensus(brainRegion,
   
   # Randomise gene order
   partition.adj <- partition.adj[sample(1:dim(partition.adj)[1], dim(partition.adj)[1]), ]
-  mod <- metanetwork::findModules.consensusCluster(d = t(partition.adj[1:400,]), 
+  mod <- metanetwork::findModules.consensusCluster(d = t(partition.adj), 
                                                    maxK = 100, 
                                                    reps = 50, 
                                                    pItem = 0.8, 
@@ -60,13 +60,13 @@ computeBrainRegionConsensus(brainRegion,
   
   # Find modularity quality metrics
   mod <- data.frame(mod,stringsAsFactors=F)
-  stopCluster(cl)
+  parallel::stopCluster(cl)
   return(mod)
 }
-dlpfcConsensus <- computeBrainRegionConsensus('DLPFC','syn10146524')
-tcxConsensus <- computeBrainRegionConsensus('TCX','syn10146524')
-cbeConsensus <- computeBrainRegionConsensus('CBE','syn10146524')
-fpConsensus <- computeBrainRegionConsensus('FP','syn10146524')
-ifgConsensus <- computeBrainRegionConsensus('IFG','syn10146524')
-phgConsensus <- computeBrainRegionConsensus('PHG','syn10146524')
-stgConsensus <- computeBrainRegionConsensus('STG','syn10146524')
+system.time(dlpfcConsensus <- computeBrainRegionConsensus('DLPFC','syn10146524'))
+#tcxConsensus <- computeBrainRegionConsensus('TCX','syn10146524')
+#cbeConsensus <- computeBrainRegionConsensus('CBE','syn10146524')
+#fpConsensus <- computeBrainRegionConsensus('FP','syn10146524')
+#ifgConsensus <- computeBrainRegionConsensus('IFG','syn10146524')
+#phgConsensus <- computeBrainRegionConsensus('PHG','syn10146524')
+#stgConsensus <- computeBrainRegionConsensus('STG','syn10146524')
