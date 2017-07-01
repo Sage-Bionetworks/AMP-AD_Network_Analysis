@@ -2,7 +2,7 @@
 run_amp_ad_enrichment <- function(geneSetList,
                                   geneSetName,
                                   hgnc = TRUE,
-                                  manifestId = "syn9770791"){
+                                  manifestId = "syn10158502"){
   
   #INPUT:
   #geneSetList - a list of genes in hgnc or ensembl format
