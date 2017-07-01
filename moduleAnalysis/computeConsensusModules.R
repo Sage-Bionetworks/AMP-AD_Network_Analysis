@@ -59,9 +59,14 @@ computeBrainRegionConsensus(brainRegion,
                                                    verbose = F)
   
   # Find modularity quality metrics
-  mod = as.data.frame(mod)
+  mod <- data.frame(mod,stringsAsFactors=F)
   stopCluster(cl)
   return(mod)
 }
-
 dlpfcConsensus <- computeBrainRegionConsensus('DLPFC','syn10146524')
+tcxConsensus <- computeBrainRegionConsensus('TCX','syn10146524')
+cbeConsensus <- computeBrainRegionConsensus('CBE','syn10146524')
+fpConsensus <- computeBrainRegionConsensus('FP','syn10146524')
+ifgConsensus <- computeBrainRegionConsensus('IFG','syn10146524')
+phgConsensus <- computeBrainRegionConsensus('PHG','syn10146524')
+stgConsensus <- computeBrainRegionConsensus('STG','syn10146524')
