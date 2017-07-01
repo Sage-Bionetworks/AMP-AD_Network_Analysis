@@ -154,13 +154,35 @@ mapply(pushToSynapseWrapper,
             'consensus module generation for msbb phg',
             'consensus module generation for msbb stg'),
        as.list(rep('syn10146524',7)),
-       rep(list(c('https://github.com/Sage-Bionetworks/AMP-AD_Network_Analysis/blob/1ed253dc8ecc7330237010a2b23698ac42cdb138/moduleAnalysis/computeConsensusModules.R',
+       rep(list(c('https://github.com/Sage-Bionetworks/AMP-AD_Network_Analysis/blob/dd8a114ea8e60b24efa17b5017724caabf07edb3/moduleAnalysis/computeConsensusModules.R',
                   'https://github.com/Sage-Bionetworks/metanetwork/blob/0e7a52e9401c9979632faf475fb3d9ad0249736c/R/findModules.consensusCluster.R')),7),
        as.list(rep('consensus module construction',7)),
        as.list(rep('consensus module building workflow',7)))
 ###add a column for consensus
-
+dfTest <- mapply(function(df,
+                          brainRegion){
+  foo <- dplyr::select(df,Gene.ID,moduleLabel)
+  colnames(foo) <- c('GeneID','Module')
+  foo$method <- rep('consensus',nrow(foo))
+  foo$ModuleName <- paste0(foo$method,foo$Module)
+  bar <- utilityFunctions::convertEnsemblToHgnc(foo$GeneID)
+  foo <- dplyr::left_join(foo,bar,by=c('GeneID'='ensembl_gene_id'))
+  foo$brainRegion <- rep(brainRegion,nrow(foo))
+  foo$ModuleNameFull <- paste0(foo$ModuleName,foo$brainRegion)
+  return(foo)
+},
+modList,
+as.list(c('DLPFC',
+          'CBE',
+          'TCX',
+          'FP',
+          'IFG',
+          'PHG',
+          'STG')),
+SIMPLIFY=FALSE)
 ###make schema correct, combine into a single data frame
+fullConsensus <- do.call(rbind,dfTest)
+rSynapseUtilities::makeTable(fullConsensus,'consensus module manifest July 1 2017','syn2370594')
 
 ###upload to a consensus table for downstream analyses
 
