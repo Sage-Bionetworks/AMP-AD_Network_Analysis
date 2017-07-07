@@ -1,7 +1,7 @@
 synapseClient::synapseLogin()
 
 #get synIds for gene expression variables
-geneExpressionDataManifest <- synapseClient::synTableQuery("SELECT * FROM syn9704300 WHERE ( ( dataSubType = 'residualGeneExpForNetAnlz' ) AND ( normalizationType = 'CQN' ) )")
+geneExpressionDataManifest <- synapseClient::synTableQuery("SELECT * FROM syn9704300 WHERE ( ( dataSubType = 'residualGeneExpForNetAnlz' ) AND ( normalizationType = 'CQN' ) AND ( center <> 'ALL'))")
 
 #get synIds for covariates
 covariateManifest <- synapseClient::synTableQuery("SELECT * FROM syn9704300 WHERE ( ( normalizationType = 'CQN' ) AND ( dataSubType = 'covariates' ) )")

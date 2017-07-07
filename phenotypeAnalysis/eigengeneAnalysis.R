@@ -1,7 +1,10 @@
+cat("\014") 
+
+
 #source('loadAMPADModules.R')
-source('pullExpressionAndPheno.R')
+source('dataPulling/pullExpressionAndPheno.R')
 ###get all modules from synapse now stored in allMods
-allMods <- synapseClient::synTableQuery("SELECT * FROM syn9770791")@values
+allMods <- synapseClient::synTableQuery("SELECT * FROM syn10158502")@values
 
 ###explode into list
 listify <- function(x,y,z){
