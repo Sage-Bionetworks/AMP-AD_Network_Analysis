@@ -9,8 +9,27 @@ reformatAndCorrectEnrichment <- function(synId){
   boo2 <- dplyr::filter(boo2,adj<=0.05)
   boo3 <- dplyr::group_by(boo2,ModuleNameFull,geneSet)
   boo4 <- dplyr::summarise(boo3,mean_or=mean(fisherOR),mean_pval=mean(-log10(fisherPval)),nsigcat=length(category))
+
   return(boo4)
 }
+
+reformatAndCorrectEnrichment2 <- function(synId){
+  afoo <- synapseClient::synGet(synId)
+  boo<-readRDS(afoo@filePath) 
+  boo2 <- do.call(rbind,boo)
+  boo2 <- dplyr::mutate(boo2,adj=p.adjust(boo2$fisherPval,method='fdr'))
+  boo2 <- dplyr::filter(boo2,adj<=0.05)
+  boo3 <- dplyr::group_by(boo2,ModuleNameFull,geneSet)
+  boo4 <- dplyr::summarise(boo3,mean_or=mean(fisherOR),mean_pval=mean(-log10(fisherPval)),nsigcat=length(category))
+  foobar <- list()
+  foobar$enrichment <- boo2
+  foobar$enrichmentSummary <- boo4
+  return(foobar)
+}
+
+consensus2 <- reformatAndCorrectEnrichment2('syn10165934')
+metanetwork <- reformatAndCorrectEnrichment2('syn10165935')
+
 
 consensus <- reformatAndCorrectEnrichment('syn10165934')
 megena <- reformatAndCorrectEnrichment('syn10166179')
