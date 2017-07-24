@@ -15,7 +15,7 @@ ConvertModsToMat <- function(ModuleList){
       
       In <- which(ModuleList$ModuleName %in% UnqMods[j])
       #print(head(In))
-      In2 <- which(ModuleList$external_gene_name %in% ModuleList$external_gene_name[In])
+      In2 <- which(GeneList %in% ModuleList$external_gene_name[In])
       #print(head(In2))
       Clust[In2] <- j 
       
