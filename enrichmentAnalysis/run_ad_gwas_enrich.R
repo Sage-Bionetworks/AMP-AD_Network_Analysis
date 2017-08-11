@@ -8,8 +8,7 @@ adList2 <- list(ad_gwas=adList,
                 dummyList=c('VEGF','APOE'))
 
 source('enrichmentAnalysis/run_amp_ad_enrichment.R')
-system.time(adTest <- run_amp_ad_enrichment(adList2,
-                               'ad_gwas'))
+system.time(adTest <- run_amp_ad_enrichment(adList2,'ad_gwas',manifestId='syn10158502'))
 
 
 
