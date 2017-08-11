@@ -1,5 +1,5 @@
 synapseClient::synapseLogin()
-allMods <- synapseClient::synTableQuery("SELECT * FROM syn9770791")@values
+allMods <- synapseClient::synTableQuery("SELECT * FROM syn10163855")@values
 library(dplyr)
 fooSummarize <- dplyr::group_by(allMods,brainRegion,ModuleName,method)%>%
   dplyr::summarise(numberOfGenes=length(ModuleName))
@@ -25,6 +25,7 @@ g <- ggplot2::ggplot(fooSummarize,
                                   fill=method))
 g <- g + ggplot2::geom_boxplot(position='dodge')
 g <- g + ggplot2::scale_y_log10()
+g <- g + ggplot2::theme_grey(base_size = 20) 
 g
 dev.off()
 
@@ -39,6 +40,7 @@ g <- ggplot2::ggplot(fooSummarize2,
                                   fill=method))
 g <- g + ggplot2::geom_col(position='dodge')
 g <- g + ggplot2::scale_y_log10()
+g <- g + ggplot2::theme_grey(base_size = 20) 
 g
 dev.off()
 

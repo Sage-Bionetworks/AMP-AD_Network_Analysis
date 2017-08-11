@@ -45,6 +45,33 @@ bbb <- bbb[,which(colSums(bbb)>0)]
 aaaa <- aaaa*bbb
 pheatmap::pheatmap(aaaa^.25)
 
+bbb2 <- bbb[-c(9,10),]
+
+###get annotation columns
+mani <- dplyr::select(metanetworkModules,Module,ModuleNameFull,brainRegion)
+mani <- mani[!duplicated(mani),]
+a2 <- mani$ModuleNameFull%in%colnames(bbb2)
+mani2 <- mani[a2,]
+brainRegion1 <- mani2$brainRegion
+names(brainRegion1) <- mani2$ModuleNameFull
+modulen <- mani2$Module
+names(modulen) <- mani2$ModuleNameFull
+
+brainRegion1 <- brainRegion1[colnames(bbb2)]
+modulen <- modulen[colnames(bbb2)]
+bbb3 <- bbb2
+colnames(bbb3) <- modulen
+
+df1 <- data.frame(brainRegion=brainRegion1,stringsAsFactors=F)
+rownames(df1) <- names(brainRegion1)
+
+png(file='~/Desktop/mousemganalysis.png',
+    height=800,
+    width=1200,
+    res=120,
+    pointsize = 20)
+pheatmap::pheatmap(bbb2,color = c('white','blue'),border_color = NA,annotation_col=df1)
+dev.off()
 #write bic network to cytoscape ready file
 
 #import into cytoscape

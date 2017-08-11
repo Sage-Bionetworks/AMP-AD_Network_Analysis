@@ -10,7 +10,7 @@ synapseClient::synapseLogin()
 #mods$FP <- synapseClient::synTableQuery('SELECT * FROM syn9737595')@values
 
 #get all mods
-allMods <- synapseClient::synTableQuery("SELECT * FROM syn9770791")@values
+allMods <- synapseClient::synTableQuery("SELECT * FROM syn10163855")@values
 
 #convert to brain region based list
 mods <- lapply(unique(allMods$brainRegion),
@@ -25,6 +25,7 @@ names(mods) <- unique(allMods$brainRegion)
 
 ######NMI
 getClueMods <- function(x){
+  
   fxn1 <- function(x){
     y <- x$Module
     names(y) <- x$GeneID
@@ -35,10 +36,6 @@ getClueMods <- function(x){
   }
   x1 <- lapply(unique(x$method),listify,x)
   names(x1) <- unique(x$method)
-  aa<-which(names(x1)=='metanetwork')
-  if(length(aa)>0){
-    names(x1)[aa] <- 'kmeans'
-  }
   baz2 <- lapply(x1,fxn1)
   
   megenaTemp <- igraph::graph_from_data_frame(x1$megena)
@@ -46,26 +43,26 @@ getClueMods <- function(x){
   megenaAdj <- as.matrix(megenaAdj)
   moduleDefn <- unique(x1$megena$Module)
   megenaAdj <- megenaAdj[-which(rownames(megenaAdj)%in%moduleDefn),moduleDefn]
-  notIn <- x1$kmeans$GeneID[which(!(x1$kmeans$GeneID%in%rownames(megenaAdj)))]
+  notIn <- x1$metanetwork$GeneID[which(!(x1$metanetwork$GeneID%in%rownames(megenaAdj)))]
   ind3 <- nrow(megenaAdj)
   megenaAdj <- rbind(megenaAdj,matrix(0,length(notIn),ncol(megenaAdj)))
-  ind1 <- nrow(x1$kmeans) - length(notIn)+1
-  ind2 <- nrow(x1$kmeans)
+  ind1 <- nrow(x1$metanetwork) - length(notIn)+1
+  ind2 <- nrow(x1$metanetwork)
   
   ind4 <- length(notIn)
   rownames(megenaAdj)[ind1:ind2] <- notIn
   megenaAdj <- cbind(megenaAdj,c(rep(0,ind3),rep(1,ind4)))
   colnames(megenaAdj)[ncol(megenaAdj)] <- 'noMod'
-  megenaAdj <- megenaAdj[x1$kmeans$GeneID,]
+  megenaAdj <- megenaAdj[x1$metanetwork$GeneID,]
   foobar <- clue::as.cl_partition(as.matrix(megenaAdj))
   baz2$megena <- foobar
-  #names(baz2)[3] <- 'kmeans'
+  #names(baz2)[3] <- 'metanetwork'
   ensembleOfCluster <- clue::cl_ensemble(list = baz2)
   return(ensembleOfCluster)
 }
 
 
-nmi <- lapply(mods,getClueMods)
+nmi <- lapply(mods[1],getClueMods)
 nmi_score <- lapply(nmi,clue::cl_agreement,method='NMI')
 
 convertNmiToFlatTable <- function(x){
@@ -93,5 +90,10 @@ nmi_score_lf_list <- do.call(rbind,nmi_score_lf_list)
 View(nmi_score_lf_list)
 rSynapseUtilities::makeTable(nmi_score_lf_list,'pairwise nmi scores with consensus','syn2370594')
 
-
-pheatmap::pheatmap(data.matrix(nmi_score[[1]]))
+png(file='~/Desktop/nmirosmap.png',
+    height=800,
+    width=1000,
+    res=120,
+    pointsize = 30)
+pheatmap::pheatmap(data.matrix(nmi_score[[1]]),fontsize = 25)
+dev.off()

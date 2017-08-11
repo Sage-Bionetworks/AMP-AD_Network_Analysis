@@ -1,7 +1,10 @@
+cat("\014") 
+
+
 #source('loadAMPADModules.R')
-source('pullExpressionAndPheno.R')
+source('dataPulling/pullExpressionAndPhenoWinsorized.R')
 ###get all modules from synapse now stored in allMods
-allMods <- synapseClient::synTableQuery("SELECT * FROM syn9770791")@values
+allMods <- synapseClient::synTableQuery("SELECT * FROM syn10158502")@values
 
 ###explode into list
 listify <- function(x,y,z){
@@ -151,7 +154,7 @@ pval2 <- unlist(ModulePvalues2)
 
 gap::qqunif(pval1)
 gap::qqunif(pval2)
-save.image(file = '~/backup.rda')
+save.image(file = '~/backupNew.rda')
 
 moduleManifest <- data.frame(ModuleNameFull = names(modulesLargeList),
                              stringsAsFactors=F)
@@ -216,7 +219,10 @@ fisherFxn <- function(x){
 moduleManifestListCollapsed <- do.call(rbind,moduleManifestList)
 notmissing <- which(rowSums(is.na(moduleManifestListCollapsed))==0)
 moduleManifestListCollapsed <- moduleManifestListCollapsed[notmissing,]
-rSynapseUtilities::makeTable(moduleManifestListCollapsed,'cross study eigengene p-values, odds ratios, pearson cor','syn2370594')
+
+
+
+rSynapseUtilities::makeTable(moduleManifestListCollapsed,'cross study eigengene p-values, odds ratios, pearson cor July 7 2017','syn2370594')
 
 #moduleManifestCombined <- do.call(rbind,
 #                                  moduleManifestList)

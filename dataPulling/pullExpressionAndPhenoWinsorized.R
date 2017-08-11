@@ -1,7 +1,7 @@
 synapseClient::synapseLogin()
 
 #get synIds for gene expression variables
-geneExpressionDataManifest <- synapseClient::synTableQuery("SELECT * FROM syn9704300 WHERE ( ( dataSubType = 'residualGeneExpForNetAnlz' ) AND ( normalizationType = 'CQN' ) AND ( center <> 'ALL'))")
+geneExpressionDataManifest <- synapseClient::synTableQuery("SELECT * FROM syn8681664 where dataType = 'mRNA' and columnScaled = 'TRUE'")
 
 #get synIds for covariates
 covariateManifest <- synapseClient::synTableQuery("SELECT * FROM syn9704300 WHERE ( ( normalizationType = 'CQN' ) AND ( dataSubType = 'covariates' ) )")
@@ -14,54 +14,52 @@ geneExpressionList <- rSynapseUtilities::loadDelimIntoList(geneExpressionDataMan
 
 #load covariate data into R
 covariateList <- rSynapseUtilities::loadDelimIntoList(covariateManifest@values$id)
-mssmcovObj <- synapseClient::synGet('syn6100548')
+covariateList$syn8484996 <- synapseClient::synGet('syn8484996',version = 8) %>%
+  synapseClient::getFileLocation() %>%
+  data.table::fread(data.table=F)
+
+covariateList$syn8456631 <- synapseClient::synGet('syn8456631',version = 15) %>%
+  synapseClient::getFileLocation() %>%
+  data.table::fread(data.table=F)
 
 #split mayo into two data-frames
 geneExpressionForAnalysis <- list()
-geneExpressionForAnalysis$mayoTCX <- dplyr::select(geneExpressionList$syn8466826,
-                         dplyr::ends_with('TCX'))
-rownames(geneExpressionForAnalysis$mayoTCX) <- geneExpressionList$syn8466826$ensembl_gene_id
+geneExpressionForAnalysis$mayoTCX <- geneExpressionList$syn8303274
+colnames(geneExpressionForAnalysis$mayoTCX)[1] <- 'aSampleId'
 
-geneExpressionForAnalysis$mayoCER <- dplyr::select(geneExpressionList$syn8466826,
-                         dplyr::ends_with('CER'))
-rownames(geneExpressionForAnalysis$mayoCER) <- geneExpressionList$syn8466826$ensembl_gene_id
+
+geneExpressionForAnalysis$mayoCER <- geneExpressionList$syn8303281
+colnames(geneExpressionForAnalysis$mayoCER)[1] <- 'aSampleId'
 library(dplyr)
 #rosmap
-geneExpressionForAnalysis$rosmapDLPFC <- geneExpressionList$syn8456719 %>% dplyr::select(-ensembl_gene_id)
-rownames(geneExpressionForAnalysis$rosmapDLPFC) <- geneExpressionList$syn8456719$ensembl_gene_id
-#split mssm into 4 data-frames
+geneExpressionForAnalysis$rosmapDLPFC <- geneExpressionList$syn8303260
+colnames(geneExpressionForAnalysis$rosmapDLPFC)[1] <- 'aSampleId'
+#msbb
+geneExpressionForAnalysis$msbbFP <- geneExpressionList$syn8303298
+colnames(geneExpressionForAnalysis$msbbFP)[1] <- 'aSampleId'
 
-mssmcov <- data.table::fread(mssmcovObj@filePath,data.table=F)
-fpIds <- dplyr::filter(mssmcov,BrodmannArea=='BM10')%>%
-  dplyr::select(sampleIdentifier)
-stgIds <- dplyr::filter(mssmcov,BrodmannArea=='BM22')%>%
-  dplyr::select(sampleIdentifier)
-phgIds <- dplyr::filter(mssmcov,BrodmannArea=='BM36')%>%
-  dplyr::select(sampleIdentifier)
-IFGIds <- dplyr::filter(mssmcov,BrodmannArea=='BM44')%>%
-  dplyr::select(sampleIdentifier)
+geneExpressionForAnalysis$msbbSTG <- geneExpressionList$syn8303308
+colnames(geneExpressionForAnalysis$msbbSTG)[1] <- 'aSampleId'
 
-geneExpressionForAnalysis$msbbFP <- geneExpressionList$syn8485027[,which(colnames(geneExpressionList$syn8485027)%in%fpIds$sampleIdentifier)]
-geneExpressionForAnalysis$msbbSTG <- geneExpressionList$syn8485027[,which(colnames(geneExpressionList$syn8485027)%in%stgIds$sampleIdentifier)]
-geneExpressionForAnalysis$msbbPHG <- geneExpressionList$syn8485027[,which(colnames(geneExpressionList$syn8485027)%in%phgIds$sampleIdentifier)]
-geneExpressionForAnalysis$msbbIFG <- geneExpressionList$syn8485027[,which(colnames(geneExpressionList$syn8485027)%in%IFGIds$sampleIdentifier)]
-rownames(geneExpressionForAnalysis$msbbFP) <- geneExpressionList$syn8485027$ensembl_gene_id
-rownames(geneExpressionForAnalysis$msbbSTG) <- geneExpressionList$syn8485027$ensembl_gene_id
-rownames(geneExpressionForAnalysis$msbbPHG) <- geneExpressionList$syn8485027$ensembl_gene_id
-rownames(geneExpressionForAnalysis$msbbIFG) <- geneExpressionList$syn8485027$ensembl_gene_id
+geneExpressionForAnalysis$msbbPHG <- geneExpressionList$syn8303314
+colnames(geneExpressionForAnalysis$msbbPHG)[1] <- 'aSampleId'
+
+geneExpressionForAnalysis$msbbIFG <- geneExpressionList$syn8303338
+colnames(geneExpressionForAnalysis$msbbIFG)[1] <- 'aSampleId'
+
 
 ####transpose all matrices
-geneExpressionForAnalysis <- lapply(geneExpressionForAnalysis,t)
+#geneExpressionForAnalysis <- lapply(geneExpressionForAnalysis,t)
 
 ####make data frames
 geneExpressionForAnalysis <- lapply(geneExpressionForAnalysis,data.frame,stringsAsFactors=FALSE)
 
 ####add sample id as first column
-addSampleId <- function(x){
-  x <- dplyr::mutate(x,aSampleId=rownames(x))
-  return(x)
-}
-geneExpressionForAnalysis <- lapply(geneExpressionForAnalysis,addSampleId)
+#addSampleId <- function(x){
+#  x <- dplyr::mutate(x,aSampleId=rownames(x))
+#  return(x)
+#}
+#geneExpressionForAnalysis <- lapply(geneExpressionForAnalysis,addSampleId)
 
  
 #add diagnosis to each expression data frame with left join
