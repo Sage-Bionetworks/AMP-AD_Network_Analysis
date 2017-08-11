@@ -1,0 +1,79 @@
+---
+title: "Alternative clustering"
+output: html_notebook
+---
+
+Pull modules.
+```{r}
+synapseClient::synapseLogin()
+modDefs <- synapseClient::synTableQuery("select * from syn10146524")@values
+head(modDefs)
+```
+
+Restrict to DLPFC and transform to gene map matrix
+
+```{r}
+modDefsDLPFC <- dplyr::filter(modDefs,brainRegion == 'DLPFC')
+convertFormat <- function(methodVal,modTab){
+    foo <- dplyr::filter(modTab,method==methodVal)
+    bar <- dplyr::select(foo,GeneID,Module)
+    colnames(bar) <- c('Gene.ID','moduleNumber')
+    return(bar)
+  }
+  
+partition.adj <- lapply(unique(modDefsDLPFC$method),convertFormat,modDefsDLPFC)
+names(partition.adj) <- unique(modDefsDLPFC$method)
+library(dplyr)
+partition.adj <- mapply(function(mod, method){
+  mod = mod %>%
+    dplyr::select(Gene.ID, moduleNumber) %>%
+    dplyr::mutate(value = 1,
+                  moduleNumber = paste0(method,'.',moduleNumber)) %>%
+    tidyr::spread(moduleNumber, value)},
+  partition.adj,
+  names(partition.adj), 
+  SIMPLIFY = F) %>%
+    plyr::join_all(type="full")
+  partition.adj[is.na(partition.adj)] <- 0
+  rownames(partition.adj) <- partition.adj$Gene.ID
+  partition.adj$Gene.ID <- NULL
+  set.seed(1)
+  # Randomise gene order
+  partition.adj <- partition.adj[sample(1:dim(partition.adj)[1], dim(partition.adj)[1]), ]
+  dim(partition.adj)
+```
+
+
+FastGGM
+```{r}
+res<-FastGGM::FastGGM(t(partition.adj)[,1:1000])
+```
+
+Next, let's run an svd, and plot the top couple PCs.
+
+```{r}
+pca_dlpfc <- svd(scale(partition.adj))
+pairs(pca_dlpfc$u[,1:5])
+dim(pca_dlpfc$u)
+```
+
+Now let's compute the median number of modules
+
+```{r}
+fooSummarize <- dplyr::group_by(modDefs,brainRegion,ModuleName,method)%>%
+  dplyr::summarise(numberOfGenes=length(ModuleName))
+
+fooSummarize2 <- dplyr::group_by(fooSummarize,brainRegion,method) %>%
+  dplyr::summarise(numberOfModules = length(method))
+
+k <- dplyr::filter(fooSummarize2,brainRegion=='DLPFC')$numberOfModules %>% median
+print(k)
+```
+
+Now, fit k means with 100 restarts on appropriate low dimensional representation
+
+```{r}
+#set.seed(1)
+#D <- pca_dlpfc$u%*%diag(pca_dlpfc$d)
+mods <- kernlab::specc(partition.adj,centers=k)
+```
