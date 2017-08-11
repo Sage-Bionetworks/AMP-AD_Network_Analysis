@@ -198,7 +198,7 @@ Gen.GSEA.DF <- function(GSE_file, AnnotFile, GWAS_file){
   #GeneFrame: dataframe containing most enriched module and
   #           pvalue of each gene in the module
   #           also contains p-value of the module computer
-  #           by MAGMA 
+  #           by MAGMA
 
   cat('Obtaining most enriched module in region .. \n')
   GWAS_enrich <- read.table(GSE_file, skip = 3, header = T)
@@ -221,3 +221,30 @@ Gen.GSEA.DF <- function(GSE_file, AnnotFile, GWAS_file){
   return(GeneFrame)
 
 }
+
+
+Compile.Pval.AllMethods <- function(FolderName){
+  #Compile Pvalues of all methods into a common file
+  #assumes only relevant output files are in the folder 
+  
+  FileNames <- list.files(FolderName)
+  #print(FileNames)
+  
+  for (i in 1:length(FileNames)){
+    
+    tmpStr <- paste(c(FolderName,'/',FileNames[i]),collapse = '')
+    temp <- read.table(tmpStr, 
+                       skip = 3, header = T)
+    
+    if (i == 1){
+      GWAS_enrich <- temp
+    } else {
+      GWAS_enrich <- rbind(GWAS_enrich, temp)
+    }
+    
+  }
+  
+  return(GWAS_enrich)
+}
+
+

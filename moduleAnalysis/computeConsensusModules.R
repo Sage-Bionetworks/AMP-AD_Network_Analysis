@@ -47,7 +47,7 @@ computeBrainRegionConsensus <- function(brainRegion,
                                                    reps = 50, 
                                                    pItem = 0.8, 
                                                    pFeature = 1,
-                                                   clusterAlg = "kmeans", 
+                                                   clusterAlg = "hc", 
                                                    innerLinkage = "average", 
                                                    distance = "pearson",
                                                    changeCDFArea = 0.001, 
@@ -182,7 +182,7 @@ as.list(c('DLPFC',
 SIMPLIFY=FALSE)
 ###make schema correct, combine into a single data frame
 fullConsensus <- do.call(rbind,dfTest)
-rSynapseUtilities::makeTable(fullConsensus,'consensus module manifest July 1 2017','syn2370594')
+rSynapseUtilities::makeTable(fullConsensus,'consensus module manifest July 13 2017','syn2370594')
 
 ###upload to a consensus table for downstream analyses
 
