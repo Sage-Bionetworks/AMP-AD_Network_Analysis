@@ -4,8 +4,8 @@ foo <- synapseClient::synQuery("select name,id from file where parentId==\'syn10
 bar <- lapply(foo$file.id,
               synapseClient::synGet)
 
-#pull consensus modules (ROSMAP)
-allMods <- synapseClient::synTableQuery("select * from syn10226075")@values
+#pull all mods (ROSMAP)
+allMods <- synapseClient::synTableQuery("select * from syn10146524")@values
 
 #pull expression and clinical data (ROSMAP)
 library(dplyr)
