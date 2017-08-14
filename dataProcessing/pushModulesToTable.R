@@ -31,7 +31,7 @@ pullAndReformat <- function(manifest){
   colnames(modules$kmeans)[1:2] <- c('Gene.ID','Module')
   modules$kmeans <- dplyr::select(modules$kmeans,-moduleLabel)
 
-  modules$rWGCNA <- dplyr::select(modules$rWGCNA,V1,moduleColors.cons)
+  modules$rWGCNA <- dplyr::select(modules$rWGCNA,V1,dplyr::starts_with('moduleColors'))
   colnames(modules$rWGCNA) <- c('Gene.ID','Module')
   
   colnames(modules$megena)[1:2] <- c('Gene.ID','Module')
@@ -84,5 +84,5 @@ allMods$ModuleNameFull <- paste0(allMods$ModuleName,allMods$brainRegion)
 allMods$ModuleNameFull <- gsub("kmeans","metanetwork",allMods$ModuleNameFull)
 allMods$method <- gsub("kmeans","metanetwork",allMods$method)
 allMods$ModuleName <- gsub("kmeans","metanetwork",allMods$ModuleName)
-rSynapseUtilities::makeTable(allMods,'full individual module manifest June 26 2017','syn2370594')
+rSynapseUtilities::makeTable(allMods,'full individual module manifest August 14 2017','syn2370594')
 
