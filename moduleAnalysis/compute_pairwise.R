@@ -2,7 +2,7 @@ cat('logging into Synapse...\n')
 synapseClient::synapseLogin()
 #grab module definitions
 cat('pulling modules...\n')
-allMods <- synapseClient::synTableQuery(paste0("SELECT * FROM ","syn10163855"))@values
+allMods <- synapseClient::synTableQuery(paste0("SELECT * FROM ","syn10338156"))@values
 listify <- function(x,y,z){
   ###fxn will listify a long form table
   ###x: unique key
