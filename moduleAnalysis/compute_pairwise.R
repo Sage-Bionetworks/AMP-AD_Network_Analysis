@@ -24,5 +24,5 @@ pairwiseMods <- run_amp_ad_enrichment(modulesLargeList,
                                       hgnc=FALSE,
                                       manifestId = "syn10338156")
 pairwiseMods <- dplyr::mutate(pairwiseMods,adj = p.adjust(fisherPval,method='fdr'))
-pairwiseMods <- dplyr::filter(pairwiseMods,adj<=0.05)
-rSynapseUtilities::makeTable(pairwiseMods,"pairwise module overlap manifest July 6 2017 FDR 0.05",'syn2370594')
+#pairwiseMods <- dplyr::filter(pairwiseMods,adj<=0.05)
+rSynapseUtilities::makeTable(pairwiseMods,"pairwise module overlap manifest August 16 2017",'syn2370594')
