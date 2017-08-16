@@ -2,13 +2,7 @@
 run_amp_ad_enrichment <- function(geneSetList,
                                   geneSetName,
                                   hgnc = TRUE,
-<<<<<<< HEAD
-                                  manifestId = "syn9770791"){
-
-=======
-                                  manifestId = "syn10158502"){
-  
->>>>>>> master
+                                  manifestId = "syn10338156"){
   #INPUT:
   #geneSetList - a list of genes in hgnc or ensembl format
   #geneSetName - name of geneset (should be a single character string)
@@ -110,7 +104,7 @@ run_amp_ad_enrichment_subset <- function(geneSetList,
                                   method,
                                   brainRegion,
                                   hgnc = TRUE,
-                                  manifestId = "syn9770791"){
+                                  manifestId = "syn10338156"){
 
   #INPUT:
   #geneSetList - a list of genes in hgnc or ensembl format
