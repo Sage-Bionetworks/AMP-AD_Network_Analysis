@@ -34,6 +34,7 @@ GenGraphViz <- function(x, pattern, Types,
                     to = Dat$ModuleNameFull2,
                     weight = 1/(1e-50 + c(Dat$fisherOR)^1))
   net <- graph.data.frame(df2, vertices=df, directed=F) 
+  net <- simplify(net)
   
   #coloring nodes on the basis of module type 
   cmap <- rainbow(l, alpha=1) 
@@ -98,8 +99,10 @@ GenClusteredViz <- function(Net,l){
   
 }
 
-PlotGraphGivenLabels <- function(Net,l,Labels, SizeList = c(),
-                                 sizeMin = 3, sizeMax = 20){
+PlotGraphGivenLabels <- function(Net,l,Labels, SizeList = c(), 
+                                 LegendNames = c(), 
+                                 sizeMin = 3, sizeMax = 20, 
+                                 VertName = c()){
   
   cmap <- rainbow(max(Labels), alpha=1)
   for( i in 1:max(Labels)){
@@ -110,20 +113,35 @@ PlotGraphGivenLabels <- function(Net,l,Labels, SizeList = c(),
   V(Net)$color <- cmap[Labels]
   
   if (length(SizeList)>0){
-    V(net)$size <- sizeMin + SizeList/max(SizeList)*sizeMax
+    V(Net)$size <- sizeMin + SizeList/max(SizeList)*sizeMax
   }
 
   #generating the plot 
   print('Generating the plot')
   #plot(Net, edge.arrow.size=.4,vertex.label=NA,
   #    layout=layout_with_fr(Net, niter = 5000, grid = 'nogrid'))
-  plot(Net, edge.arrow.size=.4,vertex.label=NA, layout = l)
+  
   
   #adding legend 
-  LegendNames <- c(1:max(Labels))
-  legend(x=-1.5, y=-1.1,LegendNames,pch=21,col="#777777", pt.bg=cmap,
-         pt.cex=2, cex=.8, bty="n", ncol=6)
+  if (length(LegendNames)==0){
+    LegendNames <- c(1:max(Labels)) 
+  }
+  if (length(VertName)==0){
+    plot(Net, edge.arrow.size=.4,vertex.label=NA, layout = l)
+    legend(x=-1.5, y=-1.1,LegendNames,pch=21,col="#777777", pt.bg=cmap,
+           pt.cex=2, cex=.8, bty="n", ncol=6)
+  } else {
+    Net$label <- VertName
+    plot(Net, edge.arrow.size=.4, layout = l,
+         vertex.label = VertName,  
+         vertex.label.color = 'black',
+         vertex.label.cex = 0.6, vertex.label.font = 2)
+    legend(x=-1.5, y=-1.1,LegendNames,pch=21,col="#777777", pt.bg=cmap,
+           pt.cex=2, cex=.8, bty="n", ncol=6)
+  }
   
   return(Net)  
   
 }
+
+

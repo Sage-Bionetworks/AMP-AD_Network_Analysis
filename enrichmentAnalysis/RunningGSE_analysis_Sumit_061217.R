@@ -10,8 +10,10 @@ source('GeneSetAnalysis_Sumit.R')
 Dat <- read.csv('Job-38889986948603617091033777.csv')
 Dat <- data.frame(Dat)
 
+Dat$fisherOR <- log(1 + Dat$fisherOR)
+
 #3. Specify the region of the brain to visualize 
-pattern <- "CER"
+pattern <- "DLPFC"
 
 #4. Specify the algorithms to consider 
 Types <- c('consen','megen','metan','speakE','wina')
@@ -45,12 +47,13 @@ ModNames <- V(Net)$name[In1]
 #11. CreateFile Gene set file for MAGMA 
 source('CreateMagmaFiles.R')
 OutputFileName <- 
-  './GWAS_files/CER_genesets/MagmaModuleFileCER_megena.txt'
+  './GWAS_files/DLPFC_genesets_0705/MagmaModuleFile_Consensus.txt'
 Create.MAGMA.GeneLists(ModNames, 
-                       OutputFileName = OutputFileName)
+                       OutputFileName = OutputFileName, 
+                       manifestId = 'syn10146524')
 
 #12. Plot histogram of pValues 
-GWAS_enrich <- read.table('ModuleGSEA_FP.log.sets.out', 
+GWAS_enrich <- read.table('ModuleGSEA_DLPFC.log.sets.out', 
                           skip = 3, header = T)
 xlab <- 'Modules'
 ylab <- '-log10(pval)'
@@ -58,12 +61,13 @@ barplot(-log10(GWAS_enrich$P), xlab = xlab, ylab = ylab)
 
 #13. Find the most enriched module 
 Min_In <- which.min(GWAS_enrich$P)
-Min_mod <- as.vector(droplevels(GWAS_enrich$SET[Min_In]))
+Min_mod <- as.vector(droplevels(GWAS_enrich$FULL_NAME[Min_In]))
 
 #14. Get minimum SNP p-values for genes in this module 
 GenePvalList <- GWAS.Enrich.Modules(Min_mod, 
                                     AnnotFile = 'testOut.genes.annot'
-                                    , GWAS_file = 'IGAP_stage_1.txt')
+                                    , GWAS_file = 'IGAP_stage_1.txt',
+                                    manifestId = 'syn10158502')
 
 #15. Find significant genes in the module 
 In_imp <- which(GenePvalList$Pval_min < 1e-5)

@@ -24,7 +24,8 @@ Net <- RetGraph$net
 l <- RetGraph$l 
 
 #6. Read the list containing enrichment for all modules 
-EnrList <- readRDS('DLPFC_allMods_0626.rds')
+EnrList <- readRDS('DLPFC_allMods_0629.rds')
+Names <- names(V(Net))
 
 #7. Compile all module results for a enrichment category 
 GeneSetName <- 'BioCarta_2013'
