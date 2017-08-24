@@ -5,7 +5,7 @@ bar <- lapply(foo$file.id,
               synapseClient::synGet)
 
 #pull all mods (ROSMAP)
-allMods <- synapseClient::synTableQuery("select * from syn10146524")@values
+allMods <- synapseClient::synTableQuery("select * from syn10338156")@values
 
 #pull expression and clinical data (ROSMAP)
 library(dplyr)

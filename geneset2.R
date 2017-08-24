@@ -9,7 +9,7 @@ baz[,2] <- colnames(bicNetworks$network)[bar[,2]]
 write.csv(baz,file='~/Desktop/rosmap.csv',quote=F)
 #pull gene set
 
-metanetworkModules <- synapseClient::synTableQuery("SELECT * FROM syn10146524 WHERE ( ( method = 'metanetwork' ))")@values
+metanetworkModules <- synapseClient::synTableQuery("SELECT * FROM syn10309369 WHERE ( ( method = 'metanetwork' ))")@values
 
 synapseClient::synapseLogin()
 geneSets1<-synapseClient::synGet('syn5923958')
@@ -65,11 +65,15 @@ colnames(bbb3) <- modulen
 df1 <- data.frame(brainRegion=brainRegion1,stringsAsFactors=F)
 rownames(df1) <- names(brainRegion1)
 
-png(file='~/Desktop/mousemganalysis.png',
-    height=800,
-    width=1200,
-    res=120,
-    pointsize = 20)
+tempNames <- WGCNA::labels2colors(colnames(bbb2))
+colnames(bbb2) <- tempNames
+rownames(df1) <- tempNames
+
+tiff(file='~/Desktop/lilly_figure.tif',
+     height=1687,
+     width=3500,
+     res=300,
+     pointsize = 30)
 pheatmap::pheatmap(bbb2,color = c('white','blue'),border_color = NA,annotation_col=df1)
 dev.off()
 #write bic network to cytoscape ready file
