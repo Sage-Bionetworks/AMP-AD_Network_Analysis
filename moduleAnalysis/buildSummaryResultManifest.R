@@ -1,5 +1,85 @@
-#####grab degs
+#####script to build module summary table
+
 synapseClient::synapseLogin()
+
+#####pull module set
+
+# schema for table:
+# 1. ModuleNameFull
+# 2. Module
+# 3. ModuleMethod
+# 4. ModuleBrainRegion
+# 5. GeneSetName
+# 6. GeneSetCategoryName
+# 7. GeneSetAssociationStatistic
+# 8. GeneSetEffect
+# 9. GeneSetBrainRegion
+# 10. GeneSetDirectionAD
+# 11. GeneSetADLinked
+# 12. GeneSetAdjustedAssociationStatistic
+
+
+moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
+colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
+
+#####MAGMA results
+magmaResults <- synapseClient::synTableQuery("SELECT * FROM syn10380432")@values
+View(magmaResults)
+magmaResults <- dplyr::select(magmaResults,SET,BETA,P)
+colnames(magmaResults) <- c('ModuleNameFull',
+                            'GeneSetEffect',
+                            'GeneSetAssociationStatistic')
+magmaResults$GeneSetName <- rep('MAGMA',
+                                nrow(magmaResults))
+magmaResults$GeneSetCategoryName <- rep('genetics',
+                                        nrow(magmaResults))
+magmaResults$GeneSetADLinked <- rep(TRUE,
+                                    nrow(magmaResults))
+magmaResults$GeneSetBrainRegion <- rep(NA,
+                                       nrow(magmaResults))
+
+magmaResults$GeneSetDirectionAD <- rep(NA,
+                                       nrow(magmaResults))
+
+magmaResults <- dplyr::select(magmaResults,
+                              ModuleNameFull,
+                              GeneSetName,
+                              GeneSetCategoryName,
+                              GeneSetAssociationStatistic,
+                              GeneSetEffect,
+                              GeneSetBrainRegion,
+                              GeneSetDirectionAD,
+                              GeneSetADLinked)
+#####merge magma results with the module set given the schema
+moduleSummary <- dplyr::left_join(moduleSet,
+                                  magmaResults)
+
+View(moduleSummary)
+#add adjustd pvalue by brain region and gene set category
+splitByBrainRegionAdjustPvalue <- function(x){
+  #split by brain region and category to adjust the p-values appropriately given the multiple hypothesis testing burden
+  brs <- unique(x$ModuleBrainRegion)
+  cats <- unique(x$GeneSetCategoryName)
+  combined <- expand.grid(brs,cats)
+  fxn1 <- function(y,z,t){
+    foo1 <- dplyr::filter(t,ModuleBrainRegion==y & GeneSetCategoryName==z)
+    foo1 <- dplyr::mutate(foo1,GeneSetAdjustedAssociationStatistic = p.adjust(GeneSetAssociationStatistic,method='fdr'))
+    return(foo1)
+  }
+  foo2 <- mapply(fxn1,
+                 combined[,1],
+                 combined[,2],
+                 MoreArgs = list(t=x),
+                 SIMPLIFY = FALSE)
+  foo2 <- do.call(rbind,foo2)
+  return(foo2)
+}
+
+moduleSummary <- splitByBrainRegionAdjustPvalue(moduleSummary)
+
+
+
+#####grab degs
 degResObj <- synapseClient::synGet("syn10163525")
 degRes <- data.table::fread(degResObj@filePath,
                             data.table = FALSE)
@@ -58,35 +138,76 @@ categoryKey <- data.frame(categoryKey,stringsAsFactors = F)
 degResults2 <- dplyr::left_join(degResults,categoryKey,by = c('category' = 'Category'))
 
 degResults2 <- dplyr::mutate(degResults2,Z = qnorm(fisherPval,lower.tail = F))
+degResultsModified <- dplyr::select(degResults2,
+                                    ModuleNameFull,
+                                    reducedCategory,
+                                    geneSet,
+                                    fisherPval,
+                                    fisherOR,
+                                    brainRegion,
+                                    Direction)
+
+colnames(degResultsModified) <- c('ModuleNameFull',
+                                  'GeneSetName',
+                                  'GeneSetCategoryName',
+                                  'GeneSetAssociationStatistic',
+                                  'GeneSetEffect',
+                                  'GeneSetBrainRegion',
+                                  'GeneSetDirectionAD')
+
+moduleSummaryDeg <- dplyr::left_join(moduleSet,degResultsModified)
+
+###match brain regions for clarity sake
+moduleSummaryDeg <- dplyr::filter(moduleSummaryDeg,ModuleBrainRegion==GeneSetBrainRegion)
+
+##define which ones are ad related
+ad_related <- grep('AD',moduleSummaryDeg$GeneSetName)
+moduleSummaryDeg$GeneSetADLinked <- rep(FALSE,nrow(moduleSummaryDeg))
+moduleSummaryDeg$GeneSetADLinked[ad_related] <- TRUE
+
+moduleSummaryDeg <- splitByBrainRegionAdjustPvalue(moduleSummaryDeg)
+
+moduleSummary <- rbind(moduleSummary,
+                       moduleSummaryDeg)
+
+View(dplyr::filter(moduleSummary,GeneSetAdjustedAssociationStatistic<0.05))
+
+
+#####compile enrichments
+
+enrichmentManifest <- synapseClient::synTableQuery("SELECT * FROM syn10468216")@values
+
+foobar <- readRDS(synapseClient::synGet(enrichmentManifest$id[1])@filePath)
+View(enrichmentManifest)
 
 
 
-summaryDegManifest <- dplyr::group_by(degResults2,
-                                      ModuleNameFull,
-                                      Direction,
-                                      reducedCategory) %>% 
-  dplyr::summarise(medianZ = median(Z),
-                   medianOR = median(fisherOR),
-                   medianPval=median(fisherPval))
-
-
-summaryDegManifest <- dplyr::mutate(summaryDegManifest,
-                                    adj = p.adjust(medianPval,
-                                                   method='fdr'))
-
-summaryDegManifest2 <- dplyr::filter(summaryDegManifest,
-                                     adj<=0.05)
-
-View(summaryDegManifest2)
-
-g <- ggplot2::ggplot(summaryDegManifest, 
-                     ggplot2::aes(x=Direction,
-                                  y=medianZ,
-                                  fill=reducedCategory))
-g <- g + ggplot2::geom_boxplot(position='dodge')
-#g <- g + ggplot2::scale_y_log10()
-g <- g + ggplot2::theme_grey(base_size = 20) 
-g
+# summaryDegManifest <- dplyr::group_by(degResults2,
+#                                       ModuleNameFull,
+#                                       Direction,
+#                                       reducedCategory) %>% 
+#   dplyr::summarise(medianZ = median(Z),
+#                    medianOR = median(fisherOR),
+#                    medianPval=median(fisherPval))
+# 
+# 
+# summaryDegManifest <- dplyr::mutate(summaryDegManifest,
+#                                     adj = p.adjust(medianPval,
+#                                                    method='fdr'))
+# 
+# summaryDegManifest2 <- dplyr::filter(summaryDegManifest,
+#                                      adj<=0.05)
+# 
+# View(summaryDegManifest2)
+# 
+# g <- ggplot2::ggplot(summaryDegManifest, 
+#                      ggplot2::aes(x=Direction,
+#                                   y=medianZ,
+#                                   fill=reducedCategory))
+# g <- g + ggplot2::geom_boxplot(position='dodge')
+# #g <- g + ggplot2::scale_y_log10()
+# g <- g + ggplot2::theme_grey(base_size = 20) 
+# g
 
 #extract 
 
@@ -94,8 +215,7 @@ g
 #dplyr::summarise(numberOfGenes=length(ModuleName)
 
 #categoryKey <- categoryKey[!duplicated(categoryKey),]
-#####MAGMA results
-magmaResults <- synapseClient::synTableQuery("SELECT * FROM syn10380432")@values
+
 
 #####cell type results
 genesets1 <- synapseClient::synGet('syn5923958')
