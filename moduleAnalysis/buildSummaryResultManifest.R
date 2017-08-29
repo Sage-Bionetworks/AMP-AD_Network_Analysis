@@ -80,6 +80,19 @@ moduleSummary <- splitByBrainRegionAdjustPvalue(moduleSummary)
 
 
 #####grab degs
+#MAYO: syn8468023
+#MSSM: syn10157628
+#ROSMAP: syn8456721
+
+# mayoResObj <- synapseClient::synGet("syn8468023")
+# mayoRes <- data.table::fread(mayoResObj@filePath,
+#                                 data.table=FALSE)
+# mayoRes <- dplyr::filter(mayoRes,
+#                          adj.P.Val <= 0.05)
+# mayoRes <- dplyr::mutate(mayoRes,Comparison2 = paste0(Comparison,'_',Direction))
+# View(mayoRes)
+
+
 degResObj <- synapseClient::synGet("syn10163525")
 degRes <- data.table::fread(degResObj@filePath,
                             data.table = FALSE)
@@ -174,6 +187,70 @@ View(dplyr::filter(moduleSummary,GeneSetAdjustedAssociationStatistic<0.05))
 
 
 #####compile enrichments
+enrichments <- synapseClient::synTableQuery("SELECT * FROM syn10492048")@values
+enrichments2 <- dplyr::select(enrichments,ModuleNameFull,category,geneSet,fisherPval,fisherOR)
+colnames(enrichments2) <- c('ModuleNameFull',
+                           'GeneSetName',
+                           'GeneSetCategoryName',
+                           'GeneSetAssociationStatistic',
+                           'GeneSetEffect')
+
+enrichments2$GeneSetBrainRegion <- rep(NA,nrow(enrichments2))
+enrichments2$GeneSetDirectionAD <- rep(NA,nrow(enrichments2))
+ad_lists <- grep('alzheimer',(enrichments2$GeneSetName))
+#ad_lists2 <- grep('load',unique(enrichments2$GeneSetName))
+#ad_lists3 <- grep("AD",unique(enrichments2$GeneSetName))
+#ad_lists<-grep('',enrichments2$GeneSetName)
+enrichments2$GeneSetADLinked <- rep(FALSE,nrow(enrichments2))
+enrichments2$GeneSetADLinked[ad_lists] <- TRUE
+
+#bonferroni womp womp
+
+bonferroni_fun <- function(x,ntests=1e8){
+  return(min(1,x*ntests))
+}
+
+enrichments2$GeneSetAdjustedAssociationStatistic <- sapply(enrichments2$GeneSetAssociationStatistic,bonferroni_fun)
+
+enrichments2 <- dplyr::left_join(moduleSet,enrichments2)
+
+ad_lists2 <- which(enrichments2$GeneSetADLinked)
+
+moduleSummary <- rbind(moduleSummary,enrichments2)
+
+moduleSummarySig <- dplyr::filter(moduleSummary,GeneSetAssociationStatistic <=0.05)
+
+library(dplyr)
+getModuleCheatSheet <- dplyr::select(moduleSummarySig,
+                                     ModuleNameFull,
+                                     GeneSetName,
+                                     GeneSetDirectionAD,
+                                     GeneSetBrainRegion,
+                                     GeneSetCategoryName,
+                                     GeneSetADLinked)
+getModuleCheatSheet$genesetdir <- paste0(getModuleCheatSheet$GeneSetName,
+                                         getModuleCheatSheet$GeneSetDirectionAD,
+                                         getModuleCheatSheet$GeneSetBrainRegion,
+                                         getModuleCheatSheet$GeneSetCategoryName)
+
+getModuleCheatSheet <- dplyr::select(getModuleCheatSheet,
+                                     ModuleNameFull,
+                                     genesetdir,
+                                     GeneSetADLinked)
+
+moduleCheatSheet <- tidyr::spread(getModuleCheatSheet,
+                                  ModuleNameFull,
+                                  GeneSetADLinked)
+
+rownames(moduleCheatSheet) <- moduleCheatSheet$genesetdir
+moduleCheatSheet <- moduleCheatSheet[,-1]
+moduleCheatSheet <- t(moduleCheatSheet)
+
+dropCols <- which(apply(moduleCheatSheet,2,sum,na.rm=T)==0)
+moduleCheatSheet <- moduleCheatSheet[,-dropCols]
+module_ad_score <- apply(moduleCheatSheet,1,sum,na.rm=T)
+sort(module_ad_score,decreasing=T)[1:30]
+
 
 enrichmentManifest <- synapseClient::synTableQuery("SELECT * FROM syn10468216")@values
 
