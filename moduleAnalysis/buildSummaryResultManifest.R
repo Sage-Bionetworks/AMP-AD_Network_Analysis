@@ -93,12 +93,15 @@ moduleSummary <- splitByBrainRegionAdjustPvalue(moduleSummary)
 # View(mayoRes)
 
 
-degResObj <- synapseClient::synGet("syn10163525")
-degRes <- data.table::fread(degResObj@filePath,
-                            data.table = FALSE)
-degRes <- dplyr::filter(degRes,
-                        adj.P.Val <= 0.05)
-degRes <- dplyr::mutate(degRes,Comparison2 = paste0(Comparison,'_',Direction))
+degResObj <- synapseClient::synGet("syn10496554")
+load(degResObj@filePath)
+#str(amp.ad.de.geneSets)
+# degResObj <- synapseClient::synGet("syn10163525")
+# degRes <- data.table::fread(degResObj@filePath,
+#                             data.table = FALSE)
+# degRes <- dplyr::filter(degRes,
+#                         adj.P.Val <= 0.05)
+# degRes <- dplyr::mutate(degRes,Comparison2 = paste0(Comparison,'_',Direction))
 
 source('enrichmentAnalysis/run_amp_ad_enrichment.R')
 
@@ -110,39 +113,41 @@ listify <- function(x,y,z){
   return(unique(y[which(z == x)]))
 }
 
-degList <- lapply(unique(degRes$Comparison2),
-                           listify,
-                           degRes$Gene.ID,
-                           degRes$Comparison2)
-names(degList) <- unique(degRes$Comparison2)
-reformatNames <- function(x){
-  foo1 <- strsplit(x,'\\.')
-  foo2 <- sapply(foo1,function(y) y[1])
-  return(foo2)
-}
-degList <- lapply(degList,reformatNames)
+# degList <- lapply(unique(degRes$Comparison2),
+#                            listify,
+#                            degRes$Gene.ID,
+#                            degRes$Comparison2)
+# names(degList) <- unique(degRes$Comparison2)
+# reformatNames <- function(x){
+#   foo1 <- strsplit(x,'\\.')
+#   foo2 <- sapply(foo1,function(y) y[1])
+#   return(foo2)
+# }
+# degList <- lapply(degList,reformatNames)
 
-degResults <- run_amp_ad_enrichment(degList,
+degResults <- run_amp_ad_enrichment(amp.ad.de.geneSets,
                                     "degs",
-                                    hgnc = FALSE)
+                                    hgnc = TRUE)
 
 ###reorganize deg results
 #split off brain region
 parseDegName <- function(x){
   library(dplyr)
-  foo1 <- strsplit(x,'_')[[1]]
+  foo1 <- strsplit(x,'\\.')[[1]]
   br <- foo1[1]
   dir <- foo1[length(foo1)]
+  #cate <- foo1[2]
   cate <- paste0(foo1[2:(length(foo1) - 1)],collapse = '_')
-  if (length(grep(paste0('.',br,'_'),cate)) > 0) {
-    cate <- gsub(paste0('.',br,'_'),'.',cate)
-  }
+  #if(length(grep(paste0('.',br,'_'),cate)) > 0) {
+  #  cate <- gsub(paste0('.',br,'_'),'.',cate)
+  #}
   
   c('brainRegion' = br,
     'Direction' = dir,
     'reducedCategory' = cate,
     'Category' = x) %>% return
 }
+
 categoryKey <- sapply(unique(degResults$category),
                       parseDegName)
 categoryKey <- t(categoryKey)
@@ -174,9 +179,9 @@ moduleSummaryDeg <- dplyr::left_join(moduleSet,degResultsModified)
 moduleSummaryDeg <- dplyr::filter(moduleSummaryDeg,ModuleBrainRegion==GeneSetBrainRegion)
 
 ##define which ones are ad related
-ad_related <- grep('AD',moduleSummaryDeg$GeneSetName)
-moduleSummaryDeg$GeneSetADLinked <- rep(FALSE,nrow(moduleSummaryDeg))
-moduleSummaryDeg$GeneSetADLinked[ad_related] <- TRUE
+#ad_related <- grep('AD',moduleSummaryDeg$GeneSetName)
+moduleSummaryDeg$GeneSetADLinked <- rep(TRUE,nrow(moduleSummaryDeg))
+#moduleSummaryDeg$GeneSetADLinked[ad_related] <- TRUE
 
 moduleSummaryDeg <- splitByBrainRegionAdjustPvalue(moduleSummaryDeg)
 
