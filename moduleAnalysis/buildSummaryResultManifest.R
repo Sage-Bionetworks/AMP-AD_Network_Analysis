@@ -2,193 +2,101 @@
 
 synapseClient::synapseLogin()
 
-#####pull module set
+source('moduleAnalysis/summaryManifestFunctions.R')
+#####igap gwas enrichments
+adGeneticsSummary <- getAdGenetics()
 
-# schema for table:
-# 1. ModuleNameFull
-# 2. Module
-# 3. ModuleMethod
-# 4. ModuleBrainRegion
-# 5. GeneSetName
-# 6. GeneSetCategoryName
-# 7. GeneSetAssociationStatistic
-# 8. GeneSetEffect
-# 9. GeneSetBrainRegion
-# 10. GeneSetDirectionAD
-# 11. GeneSetADLinked
-# 12. GeneSetAdjustedAssociationStatistic
-
-
-moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
-colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
-
-#####MAGMA results
-magmaResults <- synapseClient::synTableQuery("SELECT * FROM syn10380432")@values
-View(magmaResults)
-magmaResults <- dplyr::select(magmaResults,SET,BETA,P)
-colnames(magmaResults) <- c('ModuleNameFull',
-                            'GeneSetEffect',
-                            'GeneSetAssociationStatistic')
-magmaResults$GeneSetName <- rep('MAGMA',
-                                nrow(magmaResults))
-magmaResults$GeneSetCategoryName <- rep('genetics',
-                                        nrow(magmaResults))
-magmaResults$GeneSetADLinked <- rep(TRUE,
-                                    nrow(magmaResults))
-magmaResults$GeneSetBrainRegion <- rep(NA,
-                                       nrow(magmaResults))
-
-magmaResults$GeneSetDirectionAD <- rep(NA,
-                                       nrow(magmaResults))
-
-magmaResults <- dplyr::select(magmaResults,
-                              ModuleNameFull,
-                              GeneSetName,
-                              GeneSetCategoryName,
-                              GeneSetAssociationStatistic,
-                              GeneSetEffect,
-                              GeneSetBrainRegion,
-                              GeneSetDirectionAD,
-                              GeneSetADLinked)
-#####merge magma results with the module set given the schema
-moduleSummary <- dplyr::left_join(moduleSet,
-                                  magmaResults)
-
-View(moduleSummary)
-#add adjustd pvalue by brain region and gene set category
-splitByBrainRegionAdjustPvalue <- function(x){
-  #split by brain region and category to adjust the p-values appropriately given the multiple hypothesis testing burden
-  brs <- unique(x$ModuleBrainRegion)
-  cats <- unique(x$GeneSetCategoryName)
-  combined <- expand.grid(brs,cats)
-  fxn1 <- function(y,z,t){
-    foo1 <- dplyr::filter(t,ModuleBrainRegion==y & GeneSetCategoryName==z)
-    foo1 <- dplyr::mutate(foo1,GeneSetAdjustedAssociationStatistic = p.adjust(GeneSetAssociationStatistic,method='fdr'))
-    return(foo1)
-  }
-  foo2 <- mapply(fxn1,
-                 combined[,1],
-                 combined[,2],
-                 MoreArgs = list(t=x),
-                 SIMPLIFY = FALSE)
-  foo2 <- do.call(rbind,foo2)
-  return(foo2)
-}
-
-moduleSummary <- splitByBrainRegionAdjustPvalue(moduleSummary)
+#####deg enrichments
+degSummary <- getDeg()
 
 
 
-#####grab degs
-#MAYO: syn8468023
-#MSSM: syn10157628
-#ROSMAP: syn8456721
+adGeneticsSummarySig <- dplyr::filter(adGeneticsSummary, 
+                                      GeneSetAdjustedAssociationStatistic <= 0.05)
+admodcheat <- dplyr::select(adGeneticsSummarySig,
+                            ModuleNameFull,
+                            GeneSetName,
+                            GeneSetADLinked)
 
-# mayoResObj <- synapseClient::synGet("syn8468023")
-# mayoRes <- data.table::fread(mayoResObj@filePath,
-#                                 data.table=FALSE)
-# mayoRes <- dplyr::filter(mayoRes,
-#                          adj.P.Val <= 0.05)
-# mayoRes <- dplyr::mutate(mayoRes,Comparison2 = paste0(Comparison,'_',Direction))
-# View(mayoRes)
+admodcheat <- tidyr::spread(admodcheat,
+                            ModuleNameFull,
+                            GeneSetADLinked)
+rownames(admodcheat) <- admodcheat$GeneSetName
+admodcheat <- admodcheat[,-1]
+admodcheat <- t(admodcheat)
+admodcheat[is.na(admodcheat)] <- 0
+admodcheat <- data.frame(admodcheat,stringsAsFactors=F)
+admodcheat$adGeneticScore <- rowMeans(admodcheat)
+admodcheat$ModuleNameFull <- rownames(admodcheat)
+admodcheat <- dplyr::arrange(admodcheat,desc(adGeneticScore))
+
+moduleSummarySig <- dplyr::filter(degSummary,
+                                  GeneSetAdjustedAssociationStatistic <=0.05)
+
+library(dplyr)
+getModuleCheatSheet <- dplyr::select(moduleSummarySig,
+                                     ModuleNameFull,
+                                     GeneSetName,
+                                     GeneSetDirectionAD,
+                                     GeneSetBrainRegion,
+                                     GeneSetCategoryName,
+                                     GeneSetADLinked)
+getModuleCheatSheet$genesetdir <- paste0(getModuleCheatSheet$GeneSetName,
+                                         getModuleCheatSheet$GeneSetDirectionAD,
+                                         getModuleCheatSheet$GeneSetBrainRegion,
+                                         getModuleCheatSheet$GeneSetCategoryName)
+
+getModuleCheatSheet <- dplyr::select(getModuleCheatSheet,
+                                     ModuleNameFull,
+                                     genesetdir,
+                                     GeneSetADLinked)
+
+moduleCheatSheet <- tidyr::spread(getModuleCheatSheet,
+                                  ModuleNameFull,
+                                  GeneSetADLinked)
+
+rownames(moduleCheatSheet) <- moduleCheatSheet$genesetdir
+moduleCheatSheet <- moduleCheatSheet[,-1]
+moduleCheatSheet <- t(moduleCheatSheet)
 
 
-degResObj <- synapseClient::synGet("syn10496554")
-load(degResObj@filePath)
-#str(amp.ad.de.geneSets)
-# degResObj <- synapseClient::synGet("syn10163525")
-# degRes <- data.table::fread(degResObj@filePath,
-#                             data.table = FALSE)
-# degRes <- dplyr::filter(degRes,
-#                         adj.P.Val <= 0.05)
-# degRes <- dplyr::mutate(degRes,Comparison2 = paste0(Comparison,'_',Direction))
 
-source('enrichmentAnalysis/run_amp_ad_enrichment.R')
 
-listify <- function(x,y,z){
-  ###fxn will listify a long form table
-  ###x: unique key
-  ###y: values
-  ###z: keys
-  return(unique(y[which(z == x)]))
-}
+#dropCols <- which(apply(moduleCheatSheet,2,sum,na.rm=T)==0)
+#moduleCheatSheet <- moduleCheatSheet[,-dropCols]
+moduleCheatSheet[is.na(moduleCheatSheet)] <- 0
+moduleCheatSheet <- data.frame(moduleCheatSheet,stringsAsFactors=F)
+moduleCheatSheet$degScore <- rowMeans(moduleCheatSheet)
+moduleCheatSheet$ModuleNameFull <- rownames(moduleCheatSheet)
+moduleCheatSheet <- dplyr::arrange(moduleCheatSheet,desc(degScore))
 
-# degList <- lapply(unique(degRes$Comparison2),
-#                            listify,
-#                            degRes$Gene.ID,
-#                            degRes$Comparison2)
-# names(degList) <- unique(degRes$Comparison2)
-# reformatNames <- function(x){
-#   foo1 <- strsplit(x,'\\.')
-#   foo2 <- sapply(foo1,function(y) y[1])
-#   return(foo2)
-# }
-# degList <- lapply(degList,reformatNames)
+combinedScores <- dplyr::select(moduleCheatSheet,ModuleNameFull,degScore)
+combinedScores$degScore <- as.numeric(scale(combinedScores$degScore,center = FALSE))
+combinedScores <- dplyr::full_join(combinedScores,dplyr::select(admodcheat,ModuleNameFull,adGeneticScore))
+combinedScores$adGeneticScore <- as.numeric(scale(combinedScores$adGeneticScore,center=FALSE))
+combinedScores$aggregate <- combinedScores$degScore + combinedScores$adGeneticScore
+combinedScores <- dplyr::arrange(combinedScores,desc(aggregate))
+combinedScoresReducted <- combinedScores[1:200,]
+combinedScoresReducted <- dplyr::left_join(combinedScoresReducted,moduleSet)
 
-degResults <- run_amp_ad_enrichment(amp.ad.de.geneSets,
-                                    "degs",
-                                    hgnc = TRUE)
 
-###reorganize deg results
-#split off brain region
-parseDegName <- function(x){
-  library(dplyr)
-  foo1 <- strsplit(x,'\\.')[[1]]
-  br <- foo1[1]
-  dir <- foo1[length(foo1)]
-  #cate <- foo1[2]
-  cate <- paste0(foo1[2:(length(foo1) - 1)],collapse = '_')
-  #if(length(grep(paste0('.',br,'_'),cate)) > 0) {
-  #  cate <- gsub(paste0('.',br,'_'),'.',cate)
-  #}
-  
-  c('brainRegion' = br,
-    'Direction' = dir,
-    'reducedCategory' = cate,
-    'Category' = x) %>% return
-}
 
-categoryKey <- sapply(unique(degResults$category),
-                      parseDegName)
-categoryKey <- t(categoryKey)
-categoryKey <- data.frame(categoryKey,stringsAsFactors = F)
+module_ad_score <- apply(moduleCheatSheet,1,sum)
+sort(module_ad_score,decreasing=T)[1:30]
 
-degResults2 <- dplyr::left_join(degResults,categoryKey,by = c('category' = 'Category'))
 
-degResults2 <- dplyr::mutate(degResults2,Z = qnorm(fisherPval,lower.tail = F))
-degResultsModified <- dplyr::select(degResults2,
-                                    ModuleNameFull,
-                                    reducedCategory,
-                                    geneSet,
-                                    fisherPval,
-                                    fisherOR,
-                                    brainRegion,
-                                    Direction)
+#####pathway annotations
+pathwaySummary <- getPathways()
 
-colnames(degResultsModified) <- c('ModuleNameFull',
-                                  'GeneSetName',
-                                  'GeneSetCategoryName',
-                                  'GeneSetAssociationStatistic',
-                                  'GeneSetEffect',
-                                  'GeneSetBrainRegion',
-                                  'GeneSetDirectionAD')
+#####TO DO
+#####eigengene associations
+eigengeneSummary <- getEigengene()
 
-moduleSummaryDeg <- dplyr::left_join(moduleSet,degResultsModified)
+#####mod pres
+modulePreservationSummary <- getModulePreservation()
 
-###match brain regions for clarity sake
-moduleSummaryDeg <- dplyr::filter(moduleSummaryDeg,ModuleBrainRegion==GeneSetBrainRegion)
 
-##define which ones are ad related
-#ad_related <- grep('AD',moduleSummaryDeg$GeneSetName)
-moduleSummaryDeg$GeneSetADLinked <- rep(TRUE,nrow(moduleSummaryDeg))
-#moduleSummaryDeg$GeneSetADLinked[ad_related] <- TRUE
 
-moduleSummaryDeg <- splitByBrainRegionAdjustPvalue(moduleSummaryDeg)
-
-moduleSummary <- rbind(moduleSummary,
-                       moduleSummaryDeg)
-
-View(dplyr::filter(moduleSummary,GeneSetAdjustedAssociationStatistic<0.05))
 
 
 #####compile enrichments
