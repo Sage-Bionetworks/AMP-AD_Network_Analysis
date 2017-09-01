@@ -76,7 +76,7 @@ combinedScores <- dplyr::full_join(combinedScores,dplyr::select(admodcheat,Modul
 combinedScores$adGeneticScore <- as.numeric(scale(combinedScores$adGeneticScore,center=FALSE))
 combinedScores$aggregate <- combinedScores$degScore + combinedScores$adGeneticScore
 combinedScores <- dplyr::arrange(combinedScores,desc(aggregate))
-combinedScoresReducted <- combinedScores[1:200,]
+combinedScoresReducted <- combinedScores[1:233,]
 combinedScoresReducted <- dplyr::left_join(combinedScoresReducted,moduleSet)
 
 
