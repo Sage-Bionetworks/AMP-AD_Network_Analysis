@@ -84,15 +84,22 @@ combinedScoresReducted <- dplyr::left_join(combinedScoresReducted,moduleSet)
 ####download mods
 combinedScoresReducted <- synapseClient::synTableQuery("SELECT * FROM syn10516371")@values
 
-####get cell type enrichments
-cellTypeEnrichments <- synapseClient::synTableQuery("SELECT * FROM syn10498382")@values
 
-colnames(cellTypeEnrichments)[c(2,3,7)] <- c("GeneSetCategoryName",
+cell_type <- getCellTypes()
+cellSummarySig <- dplyr::filter(cell_type, 
+                                      GeneSetAdjustedAssociationStatistic <= 0.05)
+
+
+
+####get cell type enrichments
+#cellTypeEnrichments <- synapseClient::synTableQuery("SELECT * FROM syn10498382")@values
+
+#colnames(cellTypeEnrichments)[c(2,3,7)] <- c("GeneSetCategoryName",
                                              "GeneSetAssociationStatistic",
                                              "ModuleBrainRegion")
-cellTypeEnrichments <- splitByBrainRegionAdjustPvalue(cellTypeEnrichments)
-cellTypeEnrichments <- dplyr::filter(cellTypeEnrichments,GeneSetAdjustedAssociationStatistic<=0.05)
-combinedScoresReducted2 <- dplyr::left_join(combinedScoresReducted,dplyr::select(cellTypeEnrichments,ModuleNameFull,GeneSetCategoryName,fisherOR))
+#cellTypeEnrichments <- splitByBrainRegionAdjustPvalue(cellTypeEnrichments)
+#cellTypeEnrichments <- dplyr::filter(cellTypeEnrichments,GeneSetAdjustedAssociationStatistic<=0.05)
+combinedScoresReducted2 <- dplyr::left_join(combinedScoresReducted,dplyr::select(cellSummarySig,ModuleNameFull,GeneSetName,GeneSetEffect))
 
 
 
@@ -141,6 +148,12 @@ bonferroni_fun <- function(x,ntests=1e8){
 enrichments2$GeneSetAdjustedAssociationStatistic <- sapply(enrichments2$GeneSetAssociationStatistic,bonferroni_fun)
 
 enrichments2 <- dplyr::left_join(moduleSet,enrichments2)
+enrichments3 <- dplyr::filter(enrichments2,GeneSetAdjustedAssociationStatistic <= 0.05)
+
+combinedScoresReducted3 <- dplyr::left_join(combinedScoresReducted2,dplyr::select(enrichments3,ModuleNameFull,GeneSetName,GeneSetCategoryName,GeneSetEffect),by='ModuleNameFull')
+
+
+
 
 ad_lists2 <- which(enrichments2$GeneSetADLinked)
 
