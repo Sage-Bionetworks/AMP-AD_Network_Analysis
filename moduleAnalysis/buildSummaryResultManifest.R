@@ -95,8 +95,8 @@ cellSummarySig <- dplyr::filter(cell_type,
 #cellTypeEnrichments <- synapseClient::synTableQuery("SELECT * FROM syn10498382")@values
 
 #colnames(cellTypeEnrichments)[c(2,3,7)] <- c("GeneSetCategoryName",
-                                             "GeneSetAssociationStatistic",
-                                             "ModuleBrainRegion")
+#                                             "GeneSetAssociationStatistic",
+#                                             "ModuleBrainRegion")
 #cellTypeEnrichments <- splitByBrainRegionAdjustPvalue(cellTypeEnrichments)
 #cellTypeEnrichments <- dplyr::filter(cellTypeEnrichments,GeneSetAdjustedAssociationStatistic<=0.05)
 combinedScoresReducted2 <- dplyr::left_join(combinedScoresReducted,dplyr::select(cellSummarySig,ModuleNameFull,GeneSetName,GeneSetEffect))
