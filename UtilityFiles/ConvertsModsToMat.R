@@ -5,6 +5,7 @@ ConvertModsToMat <- function(ModuleList){
   N <- length(GeneList)
   
   InstanceList <- list()
+  
   #create cluster label representation
   for (i in 1:length(MethodList)){
     Clust <- rep(0,N)
@@ -14,9 +15,7 @@ ConvertModsToMat <- function(ModuleList){
     for( j in 1:length(UnqMods)){
       
       In <- which(ModuleList$ModuleName %in% UnqMods[j])
-      #print(head(In))
       In2 <- which(GeneList %in% ModuleList$external_gene_name[In])
-      #print(head(In2))
       Clust[In2] <- j 
       
     }
@@ -25,4 +24,4 @@ ConvertModsToMat <- function(ModuleList){
   
   return(InstanceList)
   
-  }
+}
