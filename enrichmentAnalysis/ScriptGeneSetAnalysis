@@ -1,23 +1,23 @@
 #!/bin/bash 
 
-echo “Creating SNP LOC file” 
+echo “1. Creating SNP LOC file” 
 awk '{printf("%s\t%s\t%s\n", $3, $1, $2); }' IGAP_stage_1.txt > IGAP_snp.txt
 
-echo “Changing order of columns in Gene Loc file”
+echo “2. Changing order of columns in Gene Loc file”
 awk '{printf("%s\t%s\t%d\t%d\t%s\t%s\n", $6, $2, $3, $4, $5, $1); }' ./NCBI37/NCBI37.3.gene.loc > NCBI37.2kb.sym
 
-echo “Creating annotation file”
+echo “3. Creating annotation file”
 ./magma_v1/magma --annotate --snp-loc IGAP_snp.txt --gene-loc NCBI37.2kb.sym --out testOut
 
-echo “Creating p-value file”
+echo “4. Creating p-value file”
 awk '{printf("%s\t%s\n", $3,$8); }' IGAP_stage_1.txt > IGAP_pval.txt
 
-echo “manually change the column names of the p value file to SNP and P”
+echo “5. manually change the column names of the p value file to SNP and P”
 
 read -p “Press enter to continue”
 
-echo “Performing Gene Analysis using P values”
+echo “6. Performing Gene Analysis using P values”
 ./magma_v1/magma --bfile ./g1000_eur/g1000_eur --pval IGAP_pval.txt N=74046 --gene-annot testOut.genes.annot --out IGAP_geneAnalysis 
 
-echo “Performing Gene Set Analysis”
+echo “7. Performing Gene Set Analysis”
 ./magma_v1/magma --gene-results IGAP_geneAnalysis.genes.raw --set-annot MagmaModuleFile.txt --out TestGSEA

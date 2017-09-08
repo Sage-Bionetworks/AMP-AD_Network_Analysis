@@ -6,7 +6,7 @@ setwd('Documents/SageStuff/')
 source('GenGraphViz.R')
 source('GeneSetAnalysis_Sumit.R')
 
-#2. Load the dataset 
+#2. Load the module dataset dataset 
 Dat <- read.csv('Job-38889986948603617091033777.csv')
 Dat <- data.frame(Dat)
 
