@@ -49,7 +49,70 @@ geneExpressionForAnalysisEnsg <- lapply(geneExpressionForAnalysis,function(x){
 })
 
 #test11 <- getEigenGenes(modulesLargeList[[1]],geneExpressionForAnalysisEnsg[[1]])
-test11<-utilityFunctions::outerLapply(getEigenGenes,geneExpressionForAnalysisEnsg,modulesLargeList)
+test11<-utilityFunctions::outerLapply(getEigenGenes,
+                                      geneExpressionForAnalysisEnsg,
+                                      modulesLargeList)
+fullEigengeneSet <- test11
+save(fullEigengeneSet,file='fullEigengeneSet.rda')
+fullEigengeneSetObj <- synapseClient::File('fullEigengeneSet.rda',parentId='syn7981630')
+fullEigengeneSetObj <- synapseClient::synStore(fullEigengeneSetObj)
+
+
+
+topPcs <- lapply(geneExpressionForAnalysisEnsg,
+                 function(x){
+                   return(svd(scale(x))$u[,1:10])
+                 })
+names(topPcs) <- names(geneExpressionForAnalysisEnsg)
+
+#compute correlations
+corMats<-mapply(function(x,y){
+  return(lapply(x,function(z,t){if(!is.na(z)){return(cor(z,t))}else{return(NA)}},y))},
+  x=test11,
+  y=topPcs,
+  SIMPLIFY = FALSE)
+
+corMats2 <- lapply(corMats,function(x){x[which(is.na(corMats))] <- NULL;return(x)})
+
+convertMatToDf <- function(x,y,z){
+  colnames(x) <- paste0('pc',1:ncol(x))
+  rownames(x) <- paste0('pc',1:nrow(x))
+  x <- data.frame(x,stringsAsFactors=F)
+  x$modulepc <- rownames(x)
+  x <- tidyr::gather(x,key='expressionpc',value='correlation',-modulepc)
+  x$modulenamefull <- rep(y,nrow(x))
+  x$expressiondataset <- rep(z,nrow(x))
+  return(x)
+}
+
+masterCorDf <- mapply(function(x,y){
+  foo <- mapply(convertMatToDf,
+                x,
+                names(x),
+                MoreArgs = list(z=y),
+                SIMPLIFY=FALSE)
+  foo <- do.call(rbind,foo)
+  return(foo)},
+  corMats2,
+  names(corMats2),
+  SIMPLIFY=FALSE)
+
+
+foobar <- lapply(corMats,
+                 function(x){
+                   do.call('rbind',x)})
+
+colnames(foobar$rosmapDLPFC) <- paste0('pc',1:10)
+boxplot(foobar$msbbIFG^2)
+g <- ggplot2::ggplot(foobar$rosmapDLPFC,
+                     ggplot2::aes())
+
+####make a boxplot with ggplot
+#### pc, method, correlation
+#### 
+
+
+
 
 adDiagnosis <- lapply(geneExpressionForAnalysis,function(x){
   return(dplyr::select(x,logitDiagnosis))

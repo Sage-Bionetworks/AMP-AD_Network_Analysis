@@ -22,6 +22,10 @@ covariateList$syn8456631 <- synapseClient::synGet('syn8456631',version = 15) %>%
   synapseClient::getFileLocation() %>%
   data.table::fread(data.table=F)
 
+covariateList$syn8466814 <- synapseClient::synGet('syn8466814',version = 12) %>%
+  synapseClient::getFileLocation() %>%
+  data.table::fread(data.table=F)
+
 #split mayo into two data-frames
 geneExpressionForAnalysis <- list()
 geneExpressionForAnalysis$mayoTCX <- geneExpressionList$syn8303274
