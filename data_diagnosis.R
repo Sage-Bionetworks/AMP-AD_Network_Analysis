@@ -72,7 +72,7 @@ corMats<-mapply(function(x,y){
   y=topPcs,
   SIMPLIFY = FALSE)
 
-corMats2 <- lapply(corMats,function(x){x[which(is.na(corMats))] <- NULL;return(x)})
+corMats2 <- lapply(corMats,function(x){x[which(is.na(x))] <- NULL;return(x)})
 
 convertMatToDf <- function(x,y,z){
   colnames(x) <- paste0('pc',1:ncol(x))
@@ -96,6 +96,26 @@ masterCorDf <- mapply(function(x,y){
   corMats2,
   names(corMats2),
   SIMPLIFY=FALSE)
+
+masterCorDf <- do.call(rbind,masterCorDf)
+
+
+moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
+colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
+
+masterCorDf <- dplyr::left_join(masterCorDf,moduleSet,by=c('modulenamefull'='ModuleNameFull'))
+masterCorDf$modulepc <- gsub('pc','',masterCorDf$modulepc)
+masterCorDf$modulepc <- as.numeric(masterCorDf$modulepc)
+masterCorDf$expressionpc <- gsub('pc','',masterCorDf$expressionpc)
+masterCorDf$expressionpc <- as.numeric(masterCorDf$expressionpc)
+g <- ggplot2::ggplot(dplyr::filter(masterCorDf,ModuleMethod=='consensus' & expressiondataset=='rosmapDLPFC'),
+                     ggplot2::aes(x = as.factor(expressionpc),
+                                     y = abs(correlation),
+                                     fill = as.factor(modulepc),
+                                     color = as.factor(modulepc)))
+g <- g + ggplot2::geom_boxplot()
+g
+
 
 
 foobar <- lapply(corMats,
