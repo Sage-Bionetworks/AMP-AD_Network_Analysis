@@ -1,5 +1,5 @@
 synapseClient::synapseLogin()
-
+library(dplyr)
 #get synIds for gene expression variables
 geneExpressionDataManifest <- synapseClient::synTableQuery("SELECT * FROM syn8681664 where dataType = 'mRNA' and columnScaled = 'TRUE'")
 
