@@ -72,6 +72,7 @@ GWAS.Enrich.Modules <- function(ModName, AnnotFile, GWAS_file,
            "\'",ModName[1],"\'", sep= ""))@values
 
   GeneList <- temp$external_gene_name
+  print(GeneList)
 
   #reading the list of genes from the annotation file
   cat('Reading the list of genes from the annotation file ...\n')
@@ -225,26 +226,48 @@ Gen.GSEA.DF <- function(GSE_file, AnnotFile, GWAS_file){
 
 Compile.Pval.AllMethods <- function(FolderName){
   #Compile Pvalues of all methods into a common file
-  #assumes only relevant output files are in the folder 
-  
+  #assumes only relevant output files are in the folder
+
   FileNames <- list.files(FolderName)
   #print(FileNames)
-  
+
   for (i in 1:length(FileNames)){
-    
+
     tmpStr <- paste(c(FolderName,'/',FileNames[i]),collapse = '')
-    temp <- read.table(tmpStr, 
+    temp <- read.table(tmpStr,
                        skip = 3, header = T)
-    
+
     if (i == 1){
       GWAS_enrich <- temp
     } else {
       GWAS_enrich <- rbind(GWAS_enrich, temp)
     }
-    
+
   }
-  
+
   return(GWAS_enrich)
 }
 
 
+MakeAnnotatedDF_Magma <- function(DF, br, ModTypes){ 
+  #This function appends columns corresponding to brain regions and methods 
+  #to MAGMA enrichment data frame
+  
+  N <- length(DF$SET)
+  Names <- DF$SET
+  brainRegion <- rep(br,N)
+  method <- rep('temp',N)
+  
+  for (i in 1:length(ModTypes)){
+    
+    In <- grep(ModTypes[i],Names)
+    method[In] <- rep(ModTypes[i],length(In))
+    
+  }
+  
+  DF$brainRegion <- brainRegion
+  DF$method <- method
+  
+  return(DF)
+  
+  }
