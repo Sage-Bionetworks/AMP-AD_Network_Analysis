@@ -60,7 +60,8 @@ moduleCheatSheet <- moduleCheatSheet[,-1]
 moduleCheatSheet <- t(moduleCheatSheet)
 
 
-
+moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
+colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
 
 #dropCols <- which(apply(moduleCheatSheet,2,sum,na.rm=T)==0)
 #moduleCheatSheet <- moduleCheatSheet[,-dropCols]
@@ -76,8 +77,10 @@ combinedScores <- dplyr::full_join(combinedScores,dplyr::select(admodcheat,Modul
 combinedScores$adGeneticScore <- as.numeric(scale(combinedScores$adGeneticScore,center=FALSE))
 combinedScores$aggregate <- combinedScores$degScore + combinedScores$adGeneticScore
 combinedScores <- dplyr::arrange(combinedScores,desc(aggregate))
-combinedScoresReducted <- combinedScores[1:233,]
+combinedScoresReducted <- combinedScores[1:263,]
 combinedScoresReducted <- dplyr::left_join(combinedScoresReducted,moduleSet)
+
+rSynapseUtilities::makeTable(combinedScoresReducted,tableName = "top amp-ad mods september 21 2017",projectId = 'syn5569099')
 
 
 ########compile annotations of modules

@@ -4,7 +4,7 @@ synapseClient::synapseLogin()
 ####pull top rankings from table
 buildTargetedModules <- function(tissueType){
   library(dplyr)
-  bar <- synapseClient::synTableQuery("SELECT * FROM syn10516371")@values %>%
+  bar <- synapseClient::synTableQuery("SELECT * FROM syn10879238")@values %>%
     dplyr::filter(ModuleMethod!='consensus' & ModuleBrainRegion==tissueType)
   allMods <- synapseClient::synTableQuery("SELECT * FROM syn10338156")@values
   pairwiseString <- paste0("SELECT * FROM syn10339153 where ModuleNameFull like \'%",
@@ -51,7 +51,24 @@ buildTargetedModules <- function(tissueType){
     allMods)
 
   res$mods <- lapply(dfList,getMajority)
-  names(res$mods) <- WGCNA::labels2colors(mods)
+  names(res$mods) <- paste0(tissueType,WGCNA::labels2colors(mods))
+  list2Df <- function(x,module,tissueType){
+    mod <- data.frame(GeneID = x$ensg,
+                      Module = rep(module,length(x$ensg)),
+                      method = rep('aggregate',length(x$ensg)),
+                      ModuleName = paste0('aggregate',rep(module,length(x$ensg))),
+                      brainRegion = rep(tissueType,length(x$ensg)),
+                      ModuleNameFull = paste0('aggregate',rep(module,length(x$ensg)),tissueType),
+                      stringsAsFactors=F)
+    return(mod)}
+  res$df<-mapply(list2Df,
+                 x = res$mods,
+                 module = names(res$mods),
+                 MoreArgs = list(tissueType=tissueType),
+                 SIMPLIFY=F)
+  res$df <- do.call(rbind,res$df)
+  exg <- utilityFunctions::convertEnsemblToHgnc(res$df$GeneID)
+  res$df <- dplyr::left_join(res$df,exg,by = c('GeneID' = 'ensembl_gene_id'))
   return(res)
 }
 DLPFCres <- buildTargetedModules('DLPFC')
@@ -61,6 +78,17 @@ IFGres <- buildTargetedModules('IFG')
 STGres <- buildTargetedModules('STG')
 PHGres <- buildTargetedModules('PHG')
 FPres <- buildTargetedModules('FP')
+
+AggregateModuleManifest <- rbind(DLPFCres$df,
+                                 CBEres$df,
+                                 TCXres$df,
+                                 IFGres$df,
+                                 STGres$df,
+                                 PHGres$df,
+                                 FPres$df)
+
+rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules september 21 2017',projectId='syn5569099')
+
 
 ###combine modules into a single list
 
