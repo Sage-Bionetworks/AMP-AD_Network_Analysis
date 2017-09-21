@@ -97,3 +97,49 @@ pushToSynapseWrapper <- function(df,
   #return the synapse object
   return(foo)
 }
+
+
+ClusterLowFreqConsensus <- function(Labs,cutoff){
+  
+  library(plyr)
+  m <- max(Labs) + 1 
+  Lab_In <- which(plyr::count(Labs)$freq <= cutoff)
+  In <- which(Labs %in% Lab_In)
+  Labs[In] <- m + 1 
+  return(Labs)
+}
+
+
+GenConsMods <- function(Module,mthd,ModuleList,br){
+  
+  l <- list()
+  external_gene_name <- unique(ModuleList$external_gene_name)
+  brainRegion <- c(rep(br,length(external_gene_name)))
+  method <- c(rep(mthd,length(external_gene_name)))
+  GeneID <- c()
+  
+  for (i in 1:length(external_gene_name)){
+    In <- which(ModuleList$external_gene_name %in% external_gene_name[i])
+    GeneID <- c(GeneID, ModuleList$GeneID[In[1]])
+  }
+  
+  ModuleName <- c(rep(br,length(external_gene_name)))
+  ModuleNameFull <- c(rep(br,length(external_gene_name)))
+  
+  for (i in 1:length(external_gene_name)){
+    ModuleName[i] <- paste0(mthd,Module[i])
+    ModuleNameFull[i] <- paste0(ModuleName[i],br)
+  }
+  
+  #l <- list(GeneID, Module, method, ModuleName, external_gene_name,
+  #          brainRegion, ModuleNameFull)
+  l$GeneID <- GeneID
+  l$Module <- Module
+  l$method <- method
+  l$ModuleName <- ModuleName
+  l$external_gene_name <- external_gene_name
+  l$brainRegion <- brainRegion
+  l$ModuleNameFull <- ModuleNameFull
+  
+  return(data.frame(l, stringsAsFactors = F))
+}
