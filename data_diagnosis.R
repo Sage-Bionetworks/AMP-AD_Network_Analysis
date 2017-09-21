@@ -4,8 +4,8 @@ foo <- synapseClient::synQuery("select name,id from file where parentId==\'syn10
 bar <- lapply(foo$file.id,
               synapseClient::synGet)
 
-#pull consensus modules (ROSMAP)
-allMods <- synapseClient::synTableQuery("select * from syn10226075")@values
+#pull all mods (ROSMAP)
+allMods <- synapseClient::synTableQuery("select * from syn10338156")@values
 
 #pull expression and clinical data (ROSMAP)
 library(dplyr)
@@ -49,7 +49,90 @@ geneExpressionForAnalysisEnsg <- lapply(geneExpressionForAnalysis,function(x){
 })
 
 #test11 <- getEigenGenes(modulesLargeList[[1]],geneExpressionForAnalysisEnsg[[1]])
-test11<-utilityFunctions::outerLapply(getEigenGenes,geneExpressionForAnalysisEnsg,modulesLargeList)
+test11<-utilityFunctions::outerLapply(getEigenGenes,
+                                      geneExpressionForAnalysisEnsg,
+                                      modulesLargeList)
+fullEigengeneSet <- test11
+save(fullEigengeneSet,file='fullEigengeneSet.rda')
+fullEigengeneSetObj <- synapseClient::File('fullEigengeneSet.rda',parentId='syn7981630')
+fullEigengeneSetObj <- synapseClient::synStore(fullEigengeneSetObj)
+
+
+
+topPcs <- lapply(geneExpressionForAnalysisEnsg,
+                 function(x){
+                   return(svd(scale(x))$u[,1:10])
+                 })
+names(topPcs) <- names(geneExpressionForAnalysisEnsg)
+
+#compute correlations
+corMats<-mapply(function(x,y){
+  return(lapply(x,function(z,t){if(!is.na(z)){return(cor(z,t))}else{return(NA)}},y))},
+  x=test11,
+  y=topPcs,
+  SIMPLIFY = FALSE)
+
+corMats2 <- lapply(corMats,function(x){x[which(is.na(x))] <- NULL;return(x)})
+
+convertMatToDf <- function(x,y,z){
+  colnames(x) <- paste0('pc',1:ncol(x))
+  rownames(x) <- paste0('pc',1:nrow(x))
+  x <- data.frame(x,stringsAsFactors=F)
+  x$modulepc <- rownames(x)
+  x <- tidyr::gather(x,key='expressionpc',value='correlation',-modulepc)
+  x$modulenamefull <- rep(y,nrow(x))
+  x$expressiondataset <- rep(z,nrow(x))
+  return(x)
+}
+
+masterCorDf <- mapply(function(x,y){
+  foo <- mapply(convertMatToDf,
+                x,
+                names(x),
+                MoreArgs = list(z=y),
+                SIMPLIFY=FALSE)
+  foo <- do.call(rbind,foo)
+  return(foo)},
+  corMats2,
+  names(corMats2),
+  SIMPLIFY=FALSE)
+
+masterCorDf <- do.call(rbind,masterCorDf)
+
+
+moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
+colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
+
+masterCorDf <- dplyr::left_join(masterCorDf,moduleSet,by=c('modulenamefull'='ModuleNameFull'))
+masterCorDf$modulepc <- gsub('pc','',masterCorDf$modulepc)
+masterCorDf$modulepc <- as.numeric(masterCorDf$modulepc)
+masterCorDf$expressionpc <- gsub('pc','',masterCorDf$expressionpc)
+masterCorDf$expressionpc <- as.numeric(masterCorDf$expressionpc)
+g <- ggplot2::ggplot(dplyr::filter(masterCorDf,ModuleMethod=='consensus' & expressiondataset=='rosmapDLPFC'),
+                     ggplot2::aes(x = as.factor(expressionpc),
+                                     y = abs(correlation),
+                                     fill = as.factor(modulepc),
+                                     color = as.factor(modulepc)))
+g <- g + ggplot2::geom_boxplot()
+g
+
+
+
+foobar <- lapply(corMats,
+                 function(x){
+                   do.call('rbind',x)})
+
+colnames(foobar$rosmapDLPFC) <- paste0('pc',1:10)
+boxplot(foobar$msbbIFG^2)
+g <- ggplot2::ggplot(foobar$rosmapDLPFC,
+                     ggplot2::aes())
+
+####make a boxplot with ggplot
+#### pc, method, correlation
+#### 
+
+
+
 
 adDiagnosis <- lapply(geneExpressionForAnalysis,function(x){
   return(dplyr::select(x,logitDiagnosis))

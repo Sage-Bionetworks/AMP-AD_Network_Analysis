@@ -1,5 +1,5 @@
 synapseClient::synapseLogin()
-
+library(dplyr)
 #get synIds for gene expression variables
 geneExpressionDataManifest <- synapseClient::synTableQuery("SELECT * FROM syn8681664 where dataType = 'mRNA' and columnScaled = 'TRUE'")
 
@@ -19,6 +19,10 @@ covariateList$syn8484996 <- synapseClient::synGet('syn8484996',version = 8) %>%
   data.table::fread(data.table=F)
 
 covariateList$syn8456631 <- synapseClient::synGet('syn8456631',version = 15) %>%
+  synapseClient::getFileLocation() %>%
+  data.table::fread(data.table=F)
+
+covariateList$syn8466814 <- synapseClient::synGet('syn8466814',version = 12) %>%
   synapseClient::getFileLocation() %>%
   data.table::fread(data.table=F)
 
