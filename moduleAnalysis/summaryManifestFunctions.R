@@ -66,13 +66,13 @@ splitByBrainRegionAdjustPvalue <- function(x){
   foo2 <- do.call(rbind,foo2)
   return(foo2)
 }
-getAdGenetics <- function(){
+getAdGenetics <- function(synId='syn10380432'){
   moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
   colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
   
   
   #magma enrichments
-  magmaResults <- synapseClient::synTableQuery("SELECT * FROM syn10380432")@values
+  magmaResults <- synapseClient::synTableQuery(paste0("SELECT * FROM ",synId))@values
   magmaResults <- dplyr::select(magmaResults,SET,BETA,P)
   colnames(magmaResults) <- c('ModuleNameFull',
                               'GeneSetEffect',
@@ -167,7 +167,7 @@ getAdGenetics <- function(){
   return(moduleSummary)
 }
 
-getDeg <- function(){
+getDeg <- function(synId='syn10380432'){
   moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
   colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
   degResObj <- synapseClient::synGet("syn10496554")
