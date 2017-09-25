@@ -46,6 +46,8 @@ pullReferenceGeneSets <- function(url){
   names(fooSplit2) <- names(fooSplit)
   return(fooSplit2)
 }
+
+
 splitByBrainRegionAdjustPvalue <- function(x){
   #split by brain region and category to adjust the p-values appropriately given the multiple hypothesis testing burden
   brs <- unique(x$ModuleBrainRegion)
@@ -66,13 +68,17 @@ splitByBrainRegionAdjustPvalue <- function(x){
   foo2 <- do.call(rbind,foo2)
   return(foo2)
 }
+
+
+
+
 getAdGenetics <- function(synId='syn10380432'){
-  moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
+  moduleSet <- synapseClient::synTableQuery(paste0("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from ",synId))@values
   colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
   
   
   #magma enrichments
-  magmaResults <- synapseClient::synTableQuery(paste0("SELECT * FROM ",synId))@values
+  magmaResults <- synapseClient::synTableQuery("SELECT * FROM syn10380432")@values
   magmaResults <- dplyr::select(magmaResults,SET,BETA,P)
   colnames(magmaResults) <- c('ModuleNameFull',
                               'GeneSetEffect',
@@ -137,7 +143,7 @@ getAdGenetics <- function(synId='syn10380432'){
   
   adTest <- run_amp_ad_enrichment(adList,
                                   'genetics',
-                                  manifestId='syn10338156')
+                                  manifestId=synId)
   
   adTest <- dplyr::select(adTest,
                           ModuleNameFull,
@@ -168,14 +174,15 @@ getAdGenetics <- function(synId='syn10380432'){
 }
 
 getDeg <- function(synId='syn10380432'){
-  moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
+  moduleSet <- synapseClient::synTableQuery(paste0("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from ",synId))@values
   colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
   degResObj <- synapseClient::synGet("syn10496554")
   load(degResObj@filePath)
   source('enrichmentAnalysis/run_amp_ad_enrichment.R')
   degResults <- run_amp_ad_enrichment(amp.ad.de.geneSets,
                                       "degs",
-                                      hgnc = TRUE)
+                                      hgnc = TRUE,
+                                      manifestId = synId)
   parseDegName <- function(x){
     library(dplyr)
     foo1 <- strsplit(x,'\\.')[[1]]
@@ -233,15 +240,15 @@ getDeg <- function(synId='syn10380432'){
   return(moduleSummaryDeg)
 }
 
-getCellTypes <- function(){
+getCellTypes <- function(synId = 'syn10338156'){
   source('enrichmentAnalysis/run_amp_ad_enrichment.R')
-  moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
+  moduleSet <- synapseClient::synTableQuery(paste0("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from ",synId))@values
   colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
   genesets1 <- synapseClient::synGet('syn5923958')
   load(synapseClient::getFileLocation(genesets1))
   cell_enrich <- run_amp_ad_enrichment(GeneSets$Cell_Markers,
                                   'cell_type',
-                                  manifestId='syn10338156') 
+                                  manifestId=synId) 
   cell_enrich <- dplyr::select(cell_enrich,
                           ModuleNameFull,
                           category,
@@ -270,4 +277,65 @@ getPathways <- function(){}
 getEigengene <- function(){}
 
 getModulePreservation <- function(){}
+
+pull_all_results <- function(moduleName,annos){
+  #####pull expression data
+  source('dataPulling/pullExpressionAndPhenoWinsorized.R')
+  source('pullADgenes.R')
+  names(geneExpressionForAnalysis) <- c('TCX',
+                                        'CBE',
+                                        'DLPFC',
+                                        'FP',
+                                        'STG',
+                                        'PHG',
+                                        'IFG')
+  #####get module definition
+  synapseClient::synapseLogin()
+  foo <- synapseClient::synTableQuery(paste0("select * from syn10884829 where ModuleNameFull =\'",moduleName,"\'"))@values
+  moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10884829")@values
+  colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
+  modbr <- moduleSet$ModuleBrainRegion[moduleSet$ModuleName==moduleName]
+  adgenes <- pullADgenes()
+  deggenes <- pullDegGenes()
+  celltype <- pullCellTypeGenes()
+  combined <- c(adgenes,
+                deggenes,
+                celltype)
+  
+  modIn <- function(x,y){
+    return(y%in%x)
+  }
+  
+  paintMod <- sapply(combined,modIn,foo$external_gene_name)
+  rownames(paintMod) <- foo$external_gene_name
+  paintMod <- data.frame(paintMod,
+                         stringsAsFactors = F)
+  paintMod <- paintMod[,annos]
+
+  paintMod$external_gene_name <- rownames(paintMod)
+  paintMod <- dplyr::left_join(paintMod,foo)
+  rownames(paintMod) <- paintMod$GeneID
+  
+  exprMat <- geneExpressionForAnalysis[[modbr]][,paintMod$GeneID]
+  annoMat <- data.matrix(paintMod[,1:length(annos)]) %>% data.frame()
+  #annoMat <- apply(annoMat,2,as.factor) %>% data.frame()
+
+  res <- list()
+  res$expr <- exprMat
+  #res$anno <- annoMat
+  res$anno <- paintMod
+  
+  bicNets <- synapseClient::synTableQuery(paste0("SELECT * FROM syn8681664 where ( (method = \'bic\') and (tissueTypeAbrv = \'",modbr,"\' )  and ( assay = \'RNAseq\'))"))@values
+  
+  load(synapseClient::synGet(bicNets$id[1])@filePath)
+  res$adjacencyMatrix <- as.matrix(bicNetworks$network[paintMod$GeneID,paintMod$GeneID])
+  hubs <- data.frame(hubs = rowSums(res$adjacencyMatrix+t(res$adjacencyMatrix)),GeneID=rownames(res$adjacencyMatrix),stringsAsFactors=F)
+  res$anno <- dplyr::left_join(res$anno,hubs)
+  return(res)
+}
+
+
+#bicNets <- synapseClient::synTableQuery("SELECT * FROM syn8681664 WHERE ( ( method = 'bic' ) AND ( study = 'ROSMAP' ) )")@values
+
+
 
