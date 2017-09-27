@@ -2,13 +2,13 @@ synapseClient::synapseLogin()
 
 source('moduleAnalysis/summaryManifestFunctions.R')
 
-adGeneticsSummary <- getAdGenetics(synId='syn10909862')
+adGeneticsSummary <- getAdGenetics(synId='syn10915669')
 adGeneticsSummary <- dplyr::filter(adGeneticsSummary,GeneSetAdjustedAssociationStatistic<=0.05)
 
-degSummary <- getDeg(synId='syn10909862')
+degSummary <- getDeg(synId='syn10915669')
 degSummary <- dplyr::filter(degSummary,GeneSetAdjustedAssociationStatistic<=0.05)
 
-cellSummary <- getCellTypes(synId='syn10909862')
+cellSummary <- getCellTypes(synId='syn10915669')
 cellSummary <- dplyr::filter(cellSummary,GeneSetAdjustedAssociationStatistic<=0.05)
 
 

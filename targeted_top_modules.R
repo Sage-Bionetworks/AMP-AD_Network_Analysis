@@ -35,6 +35,7 @@ buildTargetedModules <- function(tissueType,synId="syn10909307"){
   
   bootstrapFrequencies <- function(i,df,allMods,tissueType){
     set.seed(47)
+    print(i)
     bar1 <- dplyr::filter(df,metaModule==i)
 
     bar2 <- lapply(unique(df$ModuleMethod),function(x,y){
@@ -91,7 +92,7 @@ buildTargetedModules <- function(tissueType,synId="syn10909307"){
     frequencyMatrices <- lapply(bar4,getFrequencies,allMods,refGene2)
     names(frequencyMatrices) <- names(bar4)
     masterFrequencyMatrix <- Reduce("+",frequencyMatrices)
-    fivePercent <- apply(masterFrequencyMatrix,1,quantile,.99)
+    fivePercent <- apply(masterFrequencyMatrix,1,quantile,.95)
     gen <- list()
     gen$ensg <- names(which(refGene3>fivePercent))
     return(gen)
@@ -103,11 +104,10 @@ buildTargetedModules <- function(tissueType,synId="syn10909307"){
          allMods,
          tissueType)
   
-  
-  
   res$moduleGraphCommunities <- metaGraph2
   
-  
+  modLen<-sapply(res$mods,function(x) length(x$ensg))
+  res$mods <- res$mods[modLen>0]
   
   # getMajority <- function(df){
   #   masterTableHGNC <- table(df$external_gene_name)
@@ -129,7 +129,7 @@ buildTargetedModules <- function(tissueType,synId="syn10909307"){
   #   return(gen)
   # }
   #38 41 17 53  9 16 27  4 
-  mods <- unique(res$moduleGraphCommunities$metaModule)
+  mods <- unique(res$moduleGraphCommunities$metaModule)[modLen>0]
   # dfList <- lapply(mods,function(x,df,allMods){
   #   library(dplyr)
   #   dplyr::filter(allMods,ModuleNameFull %in% df$ModuleNameFull[df$metaModule==x]) %>%
@@ -176,7 +176,7 @@ AggregateModuleManifest <- rbind(DLPFCres$df,
 
 #rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules september 21 2017',projectId='syn5569099')
 
-rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules september 26 2017',projectId='syn5569099')
+rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules september 27 2017',projectId='syn5569099')
 
 
 ###combine modules into a single list
