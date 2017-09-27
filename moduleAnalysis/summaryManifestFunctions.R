@@ -72,7 +72,7 @@ splitByBrainRegionAdjustPvalue <- function(x){
 
 
 
-getAdGenetics <- function(synId='syn10380432'){
+getAdGenetics <- function(synId='syn10338156'){
   moduleSet <- synapseClient::synTableQuery(paste0("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from ",synId))@values
   colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
   
@@ -173,7 +173,7 @@ getAdGenetics <- function(synId='syn10380432'){
   return(moduleSummary)
 }
 
-getDeg <- function(synId='syn10380432'){
+getDeg <- function(synId='syn10338156'){
   moduleSet <- synapseClient::synTableQuery(paste0("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from ",synId))@values
   colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
   degResObj <- synapseClient::synGet("syn10496554")
@@ -315,15 +315,19 @@ pull_all_results <- function(moduleName,annos){
   paintMod$external_gene_name <- rownames(paintMod)
   paintMod <- dplyr::left_join(paintMod,foo)
   rownames(paintMod) <- paintMod$GeneID
-  
+  res <- list()
   exprMat <- geneExpressionForAnalysis[[modbr]][,paintMod$GeneID]
+  rownames(exprMat) <- geneExpressionForAnalysis[[modbr]]$aSampleId
+  res$rowAnnoMat <- geneExpressionForAnalysis[[modbr]][,c('aSampleId','logitDiagnosis')]
   annoMat <- data.matrix(paintMod[,1:length(annos)]) %>% data.frame()
   #annoMat <- apply(annoMat,2,as.factor) %>% data.frame()
 
-  res <- list()
+
   res$expr <- exprMat
   #res$anno <- annoMat
   res$anno <- paintMod
+  
+  #res$colAnno <- res$colAnno[,c(annos,'hubs')]
   
   bicNets <- synapseClient::synTableQuery(paste0("SELECT * FROM syn8681664 where ( (method = \'bic\') and (tissueTypeAbrv = \'",modbr,"\' )  and ( assay = \'RNAseq\'))"))@values
   
@@ -331,6 +335,9 @@ pull_all_results <- function(moduleName,annos){
   res$adjacencyMatrix <- as.matrix(bicNetworks$network[paintMod$GeneID,paintMod$GeneID])
   hubs <- data.frame(hubs = rowSums(res$adjacencyMatrix+t(res$adjacencyMatrix)),GeneID=rownames(res$adjacencyMatrix),stringsAsFactors=F)
   res$anno <- dplyr::left_join(res$anno,hubs)
+  res$colAnno <- res$anno
+  rownames(res$colAnno) <- res$anno$GeneID
+  res$colAnno <- res$colAnno[,c(annos,'hubs')]
   return(res)
 }
 

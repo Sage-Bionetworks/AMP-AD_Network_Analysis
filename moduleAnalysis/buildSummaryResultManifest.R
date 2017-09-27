@@ -82,7 +82,9 @@ combinedScoresReducted <- dplyr::left_join(combinedScoresReducted,moduleSet)
 
 rSynapseUtilities::makeTable(combinedScoresReducted,tableName = "top amp-ad mods september 21 2017",projectId = 'syn5569099')
 
-
+degTopScores <- dplyr::select(moduleCheatSheet,degScore,ModuleNameFull)
+degTopScores <- dplyr::left_join(degTopScores,moduleSet)
+rSynapseUtilities::makeTable(degTopScores,tableName = "deg mods september 26 2017",projectId = 'syn5569099')
 ########compile annotations of modules
 ####download mods
 combinedScoresReducted <- synapseClient::synTableQuery("SELECT * FROM syn10516371")@values

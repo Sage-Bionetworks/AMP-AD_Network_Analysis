@@ -2,10 +2,12 @@
 synapseClient::synapseLogin()
 
 ####pull top rankings from table
-buildTargetedModules <- function(tissueType){
+buildTargetedModules <- function(tissueType,synId="syn10909307"){
   library(dplyr)
-  bar <- synapseClient::synTableQuery("SELECT * FROM syn10879238")@values %>%
+  bar <- synapseClient::synTableQuery(paste0("SELECT * FROM ",synId))@values %>%
     dplyr::filter(ModuleMethod!='consensus' & ModuleBrainRegion==tissueType)
+  moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10338156")@values
+  colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
   allMods <- synapseClient::synTableQuery("SELECT * FROM syn10338156")@values
   pairwiseString <- paste0("SELECT * FROM syn10339153 where ModuleNameFull like \'%",
                            tissueType,
@@ -21,36 +23,121 @@ buildTargetedModules <- function(tissueType){
   
   res <- list()
   res$moduleGraph <- pairwise
-  
+  res$moduleGraph$weight <- res$moduleGraph$weight+1e-15
   graph1 <- igraph::graph_from_data_frame(res$moduleGraph,directed=FALSE)
-  test1 <- igraph::optimal.community(graph1)
+  set.seed(2)
+  test1 <- igraph::edge.betweenness.community(graph1)
   metaGraph <- data.frame(ModuleNameFull = test1$names,
                           metaModule = test1$membership,
                           stringsAsFactors=F)
-
-  res$moduleGraphCommunities <- metaGraph
+  metaGraph2<-dplyr::left_join(metaGraph,moduleSet)
   
-  getMajority <- function(df){
-    masterTableHGNC <- table(df$external_gene_name)
-    masterTableENSG <- table(df$GeneID)
-    #masterTable <- masterTable/len1
-    masterTableHGNC <- which(masterTableHGNC > 1)
-    masterTableENSG <- which(masterTableENSG > 1)
+  
+  bootstrapFrequencies <- function(i,df,allMods,tissueType){
+    set.seed(47)
+    bar1 <- dplyr::filter(df,metaModule==i)
+
+    bar2 <- lapply(unique(df$ModuleMethod),function(x,y){
+      library(dplyr)
+      dplyr::filter(y,
+                    ModuleMethod==x) %>%
+      return()
+    },df)
+    names(bar2) <- unique(df$ModuleMethod)
+    bar3 <- table(bar1$ModuleMethod)
+    bar3 <- bar3[names(bar2)]
+    if(sum(is.na(bar3))>0){
+      bar2 <- bar2[!is.na(bar3)]
+      bar3 <- bar3[!is.na(bar3)]
+    }
+    fxn1 <- function(modCount,
+                     df){
+      foo1 <- sapply(1:100,
+                     function(x,dta,modcount){
+        ind <- sample(1:nrow(dta),modcount)
+        return(dta$ModuleNameFull[ind])
+      },df,modCount)
+      foo1 <- as.matrix(foo1)
+      if(nrow(foo1)==100){
+        foo1 <- t(foo1)
+      }
+      return(foo1)
+      #sapply(1:1000,sample(1:nrow(df),modCount))
+    }
+    bar4 <- mapply(fxn1,
+                   bar3,
+                   bar2,
+                   SIMPLIFY=F)
+    getFrequencies <- function(modNameMat,allMods,refGene){
+      library(dplyr)
+      apply(modNameMat,2,function(x,allMods,refGene){
+        genes<-dplyr::filter(allMods,ModuleNameFull %in% x)
+        genes <- table(genes$GeneID)
+        refGene[names(genes)]<-genes
+        return(refGene)
+      },allMods,refGene) %>% return
+    }
+    
+    refGene <- unique(dplyr::filter(allMods,brainRegion==tissueType)$GeneID)
+    refGene2 <- rep(0,length(refGene))
+    names(refGene2) <- refGene
+    
+    modGenes <- dplyr::filter(allMods,ModuleNameFull %in% bar1$ModuleNameFull)$GeneID
+    modGenes2 <- table(modGenes)
+    refGene3 <- refGene2
+    refGene3[names(modGenes2)] <- modGenes2
+    
+    
+    frequencyMatrices <- lapply(bar4,getFrequencies,allMods,refGene2)
+    names(frequencyMatrices) <- names(bar4)
+    masterFrequencyMatrix <- Reduce("+",frequencyMatrices)
+    fivePercent <- apply(masterFrequencyMatrix,1,quantile,.99)
     gen <- list()
-    gen$ensg <- names(masterTableENSG)
-    gen$hgnc <- names(masterTableHGNC)
+    gen$ensg <- names(which(refGene3>fivePercent))
     return(gen)
   }
-  
-  mods <- unique(res$moduleGraphCommunities$metaModule)
-  dfList <- lapply(mods,function(x,df,allMods){
-    library(dplyr)
-    dplyr::filter(allMods,ModuleNameFull %in% df$ModuleNameFull[df$metaModule==x]) %>%
-      return},
-    res$moduleGraphCommunities,
-    allMods)
 
-  res$mods <- lapply(dfList,getMajority)
+  res$mods<-lapply(unique(metaGraph2$metaModule),
+         bootstrapFrequencies,
+         metaGraph2,
+         allMods,
+         tissueType)
+  
+  
+  
+  res$moduleGraphCommunities <- metaGraph2
+  
+  
+  
+  # getMajority <- function(df){
+  #   masterTableHGNC <- table(df$external_gene_name)
+  #   masterTableENSG <- table(df$GeneID)
+  #   #masterTable <- masterTable/len1
+  #   gen <- list()
+  #   masterTableHGNC <- sort(masterTableHGNC,decreasing=T)
+  #   masterTableENSG <- sort(masterTableENSG,decreasing=T)
+  #   if(length(masterTableHGNC)< 1000 | length(masterTableENSG) < 1000){
+  #     gen$ensg <- names(masterTableENSG)
+  #     gen$hgnc <- names(masterTableHGNC)
+  #   }else{
+  #     gen$ensg <- names(masterTableENSG)[1:1000]
+  #     gen$hgnc <- names(masterTableHGNC)[1:1000]
+  #   }
+  #   #masterTableHGNC <- which(masterTableHGNC > 1)
+  #   #masterTableENSG <- which(masterTableENSG > 1)
+  # 
+  #   return(gen)
+  # }
+  #38 41 17 53  9 16 27  4 
+  mods <- unique(res$moduleGraphCommunities$metaModule)
+  # dfList <- lapply(mods,function(x,df,allMods){
+  #   library(dplyr)
+  #   dplyr::filter(allMods,ModuleNameFull %in% df$ModuleNameFull[df$metaModule==x]) %>%
+  #     return},
+  #   res$moduleGraphCommunities,
+  #   allMods)
+  # 
+  # res$mods <- lapply(dfList,getMajority)
   names(res$mods) <- paste0(tissueType,WGCNA::labels2colors(mods))
   list2Df <- function(x,module,tissueType){
     mod <- data.frame(GeneID = x$ensg,
@@ -87,7 +174,9 @@ AggregateModuleManifest <- rbind(DLPFCres$df,
                                  PHGres$df,
                                  FPres$df)
 
-rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules september 21 2017',projectId='syn5569099')
+#rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules september 21 2017',projectId='syn5569099')
+
+rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules september 26 2017',projectId='syn5569099')
 
 
 ###combine modules into a single list
