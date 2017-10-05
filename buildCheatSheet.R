@@ -42,14 +42,23 @@ masterSheet[!is.na(masterSheet)] <- TRUE
 masterSheet[is.na(masterSheet)] <- FALSE
 
 pheatmap::pheatmap(t(data.matrix(masterSheet)))
-annos <- colnames(masterSheet)[which(masterSheet['aggregateDLPFCblueDLPFC',]!=0)]
-res1<-pull_all_results('aggregateDLPFCblueDLPFC',
+
+
+###tcx blue tcx
+annos <- colnames(masterSheet)[which(masterSheet['aggregateTCXblueTCX',]!=0)]
+res1<-pull_all_results('aggregateTCXblueTCX',
                  c('Zhang.Astrocyte',
                    'Zhang.Endothelial',
+                   'Zhang.OPC',
                    'pantherPresenilin',
                    'genecards',
-                   'DLPFC.AD.CONTROL.FEMALE.UP',
-                   'DLPFC.AD.CONTROL.MALE.DOWN'))
+                   'dbgap',
+                   'TCX.ApoE1.ApoE0.UP',
+                   'TCX.ApoE2.ApoE0.UP',
+                   'jensenDisease',
+                   'TCX.AD.CONTROL.FEMALE.UP',
+                   'TCX.AD.CONTROL.MALE.UP',
+                   'TCX.AD.CONTROL.UP'))
 
 str(res1)
 png(file='~/Desktop/bluedlpfc.png',height=1600,width=2400)

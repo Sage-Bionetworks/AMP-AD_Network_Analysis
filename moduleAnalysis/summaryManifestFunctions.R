@@ -290,7 +290,7 @@ pull_all_results <- function(moduleName,annos){
                                         'PHG',
                                         'IFG')
   #####get module definition
-  synapseClient::synapseLogin()
+  #synapseClient::synapseLogin()
   foo <- synapseClient::synTableQuery(paste0("select * from syn10884829 where ModuleNameFull =\'",moduleName,"\'"))@values
   moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10884829")@values
   colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
@@ -307,7 +307,7 @@ pull_all_results <- function(moduleName,annos){
   }
   
   paintMod <- sapply(combined,modIn,foo$external_gene_name)
-  rownames(paintMod) <- foo$external_gene_name
+  rownames(paintMod) <- foo$GeneID
   paintMod <- data.frame(paintMod,
                          stringsAsFactors = F)
   paintMod <- paintMod[,annos]
