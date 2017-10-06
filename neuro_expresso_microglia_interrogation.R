@@ -2,22 +2,25 @@
 download.file("https://github.com/oganm/neuroExpressoAnalysis/raw/master/data/mouseMarkerGenesCombined.rda",'neuroex.rda')
 load('neuroex.rda')
 
-cortex_mg_act <- mouseMarkerGenesCombined$Cortex$Microglia_activation
-cortex_mg_deact <- mouseMarkerGenesCombined$Cortex$Microglia_deactivation
+all_cell_types <- mapply(function(list_of_genes,name_of_list){
+  name_of_lists <- names(list_of_genes)
+  name_of_lists <- paste0(name_of_list,'_',name_of_lists)
+  names(list_of_genes) <- name_of_lists
+  return(list_of_genes)
+},mouseMarkerGenesCombined,
+names(mouseMarkerGenesCombined),
+SIMPLIFY=T)
+
+all_cell_types<-Reduce('c',all_cell_types)
 
 
-
-library(utilityFunctions)
-detach("package:utilityFunctions",force=T,unload=T)
-
+#cortex_mg_act <- mouseMarkerGenesCombined$Cortex$Microglia_activation
+#cortex_mg_deact <- mouseMarkerGenesCombined$Cortex$Microglia_deactivation
 #pull aggregate modules
 
 aggMods <- rSynapseUtilities::loadFullTable("syn10915669")
 
 mouseIds <- utilityFunctions::getMouseOrthologsFromHumanIds(unique(aggMods$GeneID))
-
-View(mouseIds)
-
 
 ###run enrichments on aggregate modules for activated and deactivated gene sets
 
@@ -32,19 +35,13 @@ dfList <- lapply(unique(aggMods$ModuleNameFull),
                  aggMods$ModuleNameFull)
 names(dfList) <- unique(aggMods$ModuleNameFull)
 
-mg_act <- sapply(dfList,
-                utilityFunctions::fisherWrapperPval,
-                cortex_mg_act,
-                unique(aggMods$mmusculus_homolog_associated_gene_name))
 
-mg_deact <- sapply(dfList,
-                             utilityFunctions::fisherWrapperPval,
-                             cortex_mg_deact,
-                             unique(aggMods$mmusculus_homolog_associated_gene_name))
+library(dplyr)
+test_res <- utilityFunctions::fisherWrapperPval %>%
+  utilityFunctions::outerSapplyParallel(dfList,
+                                        all_cell_types,
+                                        unique(aggMods$mmusculus_homolog_associated_gene_name))
+test_res2 <- test_res*(nrow(test_res)*ncol(test_res))
+pheatmap::pheatmap((apply(test_res2<0.05,1,as.numeric)))
 
-spike_in <- mouseMarkerGenesCombined$Cortex$Astrocyte
 
-test_res <- mg_act <- sapply(dfList,
-                             utilityFunctions::fisherWrapperPval,
-                             spike_in,
-                             unique(aggMods$mmusculus_homolog_associated_gene_name))
