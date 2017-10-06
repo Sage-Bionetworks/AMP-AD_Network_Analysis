@@ -42,6 +42,11 @@ test_res <- utilityFunctions::fisherWrapperPval %>%
                                         all_cell_types,
                                         unique(aggMods$mmusculus_homolog_associated_gene_name))
 test_res2 <- test_res*(nrow(test_res)*ncol(test_res))
-pheatmap::pheatmap((apply(test_res2<0.05,1,as.numeric)))
+test_res3<-(apply(test_res2<0.05,1,as.numeric))
+cs_res <- colSums(test_res3)
+rs_res <- rowSums(test_res3)
+rownames(test_res3) <- colnames(test_res2)
+test_res3 <- test_res3[which(rs_res>0),which(cs_res>0)]
+pheatmap::pheatmap(t(test_res3))
 
 
