@@ -311,8 +311,8 @@ pull_all_results <- function(moduleName,annos){
   paintMod <- data.frame(paintMod,
                          stringsAsFactors = F)
   paintMod <- paintMod[,annos]
-
-  paintMod$external_gene_name <- rownames(paintMod)
+  
+  paintMod$GeneID <- rownames(paintMod)
   paintMod <- dplyr::left_join(paintMod,foo)
   rownames(paintMod) <- paintMod$GeneID
   res <- list()
@@ -332,6 +332,7 @@ pull_all_results <- function(moduleName,annos){
   bicNets <- synapseClient::synTableQuery(paste0("SELECT * FROM syn8681664 where ( (method = \'bic\') and (tissueTypeAbrv = \'",modbr,"\' )  and ( assay = \'RNAseq\'))"))@values
   
   load(synapseClient::synGet(bicNets$id[1])@filePath)
+  library(Matrix)
   res$adjacencyMatrix <- as.matrix(bicNetworks$network[paintMod$GeneID,paintMod$GeneID])
   hubs <- data.frame(hubs = rowSums(res$adjacencyMatrix+t(res$adjacencyMatrix)),GeneID=rownames(res$adjacencyMatrix),stringsAsFactors=F)
   res$anno <- dplyr::left_join(res$anno,hubs)

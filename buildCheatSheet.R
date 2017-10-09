@@ -46,7 +46,7 @@ pheatmap::pheatmap(t(data.matrix(masterSheet)))
 
 ###tcx blue tcx
 annos <- colnames(masterSheet)[which(masterSheet['aggregateTCXblueTCX',]!=0)]
-res1<-pull_all_results('aggregateTCXblueTCX',
+res1 <- pull_all_results('aggregateTCXblueTCX',
                  c('Zhang.Astrocyte',
                    'Zhang.Endothelial',
                    'Zhang.OPC',
@@ -61,11 +61,21 @@ res1<-pull_all_results('aggregateTCXblueTCX',
                    'TCX.AD.CONTROL.UP'))
 
 str(res1)
-png(file='~/Desktop/bluedlpfc.png',height=1600,width=2400)
+#res1$rowAnnoMat$logitDiagnosis[is.na(res1$rowAnnoMat$logitDiagnosis)]<-2
+
+ram <- res1$rowAnnoMat
+rownames(ram) <- ram$aSampleId
+ram <- dplyr::select(ram,-aSampleId)
+rownames(res1$rowAnnoMat) <- res1$rowAnnoMat$aSampleId
+res1$rowAnnoMat <- dplyr::select(res1$rowAnnoMat,logitDiagnosis)
+png(file='~/Desktop/bluetcx.png',
+    height=1600,
+    width=2400)
+
 pheatmap::pheatmap(res1$expr,
-                   annotation_col = data.frame(data.matrix(res1$colAnno)),
-                   annotation_row = data.frame(res1$rowAnnoMat),
+                   annotation_col = data.frame(data.matrix(res1$colAnno))[,c(1,2,4,6,7)],
+                   #annotation_row = data.frame(res1$rowAnnoMat),
+                   annotation_row = ram,
                    show_colnames = F, 
-                   show_rownames = F,
-                   fontsize = 30)
+                   show_rownames = F)
 dev.off()
