@@ -43,9 +43,78 @@ masterSheet[is.na(masterSheet)] <- FALSE
 
 pheatmap::pheatmap(t(data.matrix(masterSheet)))
 
+colnames(masterSheet)
+fixDegName <- function(x,br){
+  if(x=='AD_CONTROL_AODDOWN'){
+    foo <- paste0(br,'.AD.CONTROL.AOD.DOWN')
+  } else if (x=='AD_CONTROL_AODUP'){
+    foo <- paste0(br,'.AD.CONTROL.AOD.UP')
+  } else if (x=='AD_CONTROL_FEMALEDOWN'){
+    foo <- paste0(br,'.AD.CONTROL.FEMALE.DOWN')
+  } else if (x=='AD_CONTROL_FEMALEUP'){
+    foo <- paste0(br,'.AD.CONTROL.FEMALE.UP')
+  } else if (x=='AD_CONTROL_MALEDOWN'){
+    foo <- paste0(br,'.AD.CONTROL.MALE.DOWN')
+  } else if (x=='AD_CONTROL_MALEUP'){
+    foo <- paste0(br,'.AD.CONTROL.MALE.UP')
+  } else if (x=='AD_CONTROLDOWN'){
+    foo <- paste0(br,'.AD.CONTROL.DOWN')
+  } else if (x=='AD_CONTROLUP'){
+    foo <- paste0(br,'.AD.CONTROL.UP')
+  } else if (x=='ApoE1_ApoE0DOWN'){
+    foo <- paste0(br,'.ApoE1.ApoE0.DOWN')
+  } else if (x=='ApoE1_ApoE0UP'){
+    foo <- paste0(br,'.ApoE1.ApoE0.UP')
+  } else if (x=='ApoE2_ApoE0DOWN'){
+    foo <- paste0(br,'.ApoE2.ApoE0.DOWN')
+  } else if (x=='ApoE2_ApoE0UP'){
+    foo <- paste0(br,'.ApoE2.ApoE0.UP')
+  } else {
+    foo <- x
+  }
+  return(foo)
+}
+#colnames(masterSheet)[1:12] <- c('')
+moduleSet <- synapseClient::synTableQuery(paste0("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from ","syn10915669"))@values
+colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
+rownames(moduleSet) <- moduleSet$ModuleNameFull
+#build manifest for mapply of pull all results
+moduleNames <- rownames(masterSheet)
+brainRegions <- moduleSet[moduleNames,'ModuleBrainRegion']
+annosFull <- lapply(moduleNames,function(mn,masterSheet){
+  return(colnames(masterSheet)[which(masterSheet[mn,]!=0)])
+}, masterSheet)
+annosFull <- mapply(function(x,br){
+  return(sapply(x,fixDegName,br))
+},annosFull,brainRegions,SIMPLIFY = FALSE)
+
+
+
+data4mp<-getDataForModulePainting()
+
+
+fullManifest <- mapply(pull_all_results,
+                       moduleNames,
+                       annosFull,
+                       MoreArgs = list(geneExpressionForAnalysis = data4mp$geneExpressionForAnalysis,
+                                       moduleSet = data4mp$moduleSet,
+                                       combined = data4mp$combined),
+                       SIMPLIFY = FALSE)
+names(fullManifest) <- moduleNames
 
 ###tcx blue tcx
-annos <- colnames(masterSheet)[which(masterSheet['aggregateTCXblueTCX',]!=0)]
+save(fullManifest,file='aggregate_module_mainfest.rda')
+#annos <- colnames(masterSheet)[which(masterSheet['aggregateTCXblueTCX',]!=0)]
+
+
+getTopHobs <- function(x){
+  return(dplyr::arrange(x$anno,desc(hubs))$external_gene_name[1:5])
+}
+
+topHubs <- sapply(fullManifest,getTopHobs)
+
+
+
 res1 <- pull_all_results('aggregateTCXblueTCX',
                  c('Zhang.Astrocyte',
                    'Zhang.Endothelial',

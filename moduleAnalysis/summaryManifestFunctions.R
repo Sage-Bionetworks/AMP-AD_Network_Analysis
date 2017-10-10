@@ -278,10 +278,11 @@ getEigengene <- function(){}
 
 getModulePreservation <- function(){}
 
-pull_all_results <- function(moduleName,annos){
-  #####pull expression data
+
+getDataForModulePainting <- function(){
   source('dataPulling/pullExpressionAndPhenoWinsorized.R')
   source('pullADgenes.R')
+  res <- list()
   names(geneExpressionForAnalysis) <- c('TCX',
                                         'CBE',
                                         'DLPFC',
@@ -291,26 +292,41 @@ pull_all_results <- function(moduleName,annos){
                                         'IFG')
   #####get module definition
   #synapseClient::synapseLogin()
-  foo <- synapseClient::synTableQuery(paste0("select * from syn10884829 where ModuleNameFull =\'",moduleName,"\'"))@values
-  moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10884829")@values
+  res$geneExpressionForAnalysis <- geneExpressionForAnalysis
+  moduleSet <- synapseClient::synTableQuery("SELECT DISTINCT ModuleNameFull, Module, method, brainRegion from syn10915669")@values
   colnames(moduleSet)[c(3:4)] <- c('ModuleMethod','ModuleBrainRegion')
-  modbr <- moduleSet$ModuleBrainRegion[moduleSet$ModuleName==moduleName]
+  res$moduleSet <- moduleSet
   adgenes <- pullADgenes()
   deggenes <- pullDegGenes()
   celltype <- pullCellTypeGenes()
-  combined <- c(adgenes,
+  res$combined <- c(adgenes,
                 deggenes,
                 celltype)
-  
+  return(res)
+}
+
+pull_all_results <- function(moduleName,
+                             annos,
+                             geneExpressionForAnalysis,
+                             moduleSet,
+                             combined){
+  #####pull expression data
+  print(moduleName)
+  print(annos)
+  foo <- synapseClient::synTableQuery(paste0("select * from syn10915669 where ModuleNameFull =\'",moduleName,"\'"))@values
+  modbr <- moduleSet$ModuleBrainRegion[moduleSet$ModuleName==moduleName]
   modIn <- function(x,y){
     return(y%in%x)
   }
-  
+  if(modbr=='CBE'){
+    annos <- gsub('CBE','CER',annos)
+  }
   paintMod <- sapply(combined,modIn,foo$external_gene_name)
   rownames(paintMod) <- foo$GeneID
   paintMod <- data.frame(paintMod,
                          stringsAsFactors = F)
-  paintMod <- paintMod[,annos]
+  #paintMod <- paintMod[,annos]
+  paintMod <- dplyr::select(paintMod,annos)
   
   paintMod$GeneID <- rownames(paintMod)
   paintMod <- dplyr::left_join(paintMod,foo)
