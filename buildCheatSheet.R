@@ -108,11 +108,11 @@ save(fullManifest,file='aggregate_module_mainfest.rda')
 
 
 getTopHobs <- function(x){
-  return(dplyr::arrange(x$anno,desc(hubs))$external_gene_name[1:5])
+  return(dplyr::arrange(x$anno,desc(hubs))$GeneID[1:10])
 }
 
 topHubs <- sapply(fullManifest,getTopHobs)
-
+topHubs<-names(sort(table(c(topHubs)),decreasing=T))
 
 
 res1 <- pull_all_results('aggregateTCXblueTCX',

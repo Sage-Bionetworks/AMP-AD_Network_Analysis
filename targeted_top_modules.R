@@ -176,7 +176,7 @@ AggregateModuleManifest <- rbind(DLPFCres$df,
 
 #rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules september 21 2017',projectId='syn5569099')
 
-rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules september 27 2017',projectId='syn5569099')
+rSynapseUtilities::makeTable(AggregateModuleManifest,'collapsed ad meta modules october 10 2017',projectId='syn2370594')
 
 
 ###combine modules into a single list
