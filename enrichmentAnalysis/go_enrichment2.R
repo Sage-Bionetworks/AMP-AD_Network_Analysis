@@ -94,3 +94,10 @@ enrichr$omim_expanded <- run_amp_ad_enrichment(omim_expanded,'omim_expanded',
                                                manifestId = 'syn11182793')
 enrichr$dbgap <- run_amp_ad_enrichment(dbgap,'dbgap',
                                        manifestId = 'syn11182793')
+
+enrichr2 <- do.call('rbind',enrichr)
+
+View(enrichr2)
+enrichr2 <- dplyr::mutate(enrichr2,adj = p.adjust(fisherPval,method='fdr'))
+enrichr2 <- dplyr::filter(enrichr2,adj<=0.05)
+enrichr2 <- dplyr::arrange(enrichr2,adj)
