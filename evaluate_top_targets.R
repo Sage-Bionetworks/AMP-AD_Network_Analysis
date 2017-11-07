@@ -96,5 +96,27 @@ g <- g + ggplot2::xlab('Top Targets')
 g <- g + ggplot2::ylab('Median module connectivity')
 g
 
-foobar <- dplyr::left_join(bar6,bar3,by=c('external_gene_name'='value'))
+foobar <- dplyr::left_join(bar6,
+                           bar3,
+                           by=c('external_gene_name'='value'))
 
+####cross consortia top targets based on same metrics
+###get network degrees
+
+getHubs <- function(modbr){
+  bicNets <- synapseClient::synTableQuery(paste0("SELECT * FROM syn8681664 where ( (method = \'bic\') and (tissueTypeAbrv = \'",modbr,"\' )  and ( assay = \'RNAseq\'))"))@values
+  load(synapseClient::synGet(bicNets$id[1])@filePath)
+  library(Matrix)
+  res <- list()
+  res$adjacencyMatrix <- as.matrix(bicNetworks$network)
+  hubs <- data.frame(hubs = rowSums(res$adjacencyMatrix+t(res$adjacencyMatrix)),GeneID=rownames(res$adjacencyMatrix),brainRegion = rep(modbr,nrow(res$adjacencyMatrix)),stringsAsFactors=F)
+  
+  
+  return(hubs)
+}
+
+hubDf <- lapply(c('DLPFC','STG','IFG','FP','PHG','TCX','CBE'),getHubs)
+hubDf <- do.call('rbind',hubDf)
+
+map1 <- utilityFunctions::convertEnsemblToHgnc(unique(hubDf$GeneID))
+hubDf <- dplyr::left_join(hubDf,map1,by=c('GeneID'='ensembl_gene_id'))
