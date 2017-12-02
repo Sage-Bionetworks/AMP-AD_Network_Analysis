@@ -159,12 +159,21 @@ buildTargetedModules <- function(tissueType,synId="syn10909307"){
   return(res)
 }
 DLPFCres <- buildTargetedModules('DLPFC')
+save(DLPFCres,file='dlpfc_res.rda')
+rm(DLPFCres)
+gc()
 CBEres <- buildTargetedModules('CBE')
+save(CBEres,file='cbe_res.rda')
+rm(CBEres)
+gc()
+
 TCXres <- buildTargetedModules('TCX')
 IFGres <- buildTargetedModules('IFG')
 STGres <- buildTargetedModules('STG')
 PHGres <- buildTargetedModules('PHG')
 FPres <- buildTargetedModules('FP')
+
+
 
 AggregateModuleManifest <- rbind(DLPFCres$df,
                                  CBEres$df,

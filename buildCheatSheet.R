@@ -43,6 +43,8 @@ masterSheet[is.na(masterSheet)] <- FALSE
 
 pheatmap::pheatmap(t(data.matrix(masterSheet)))
 
+save(masterSheet,file='masterSheetEnrich.rda')
+
 colnames(masterSheet)
 fixDegName <- function(x,br){
   if(x=='AD_CONTROL_AODDOWN'){

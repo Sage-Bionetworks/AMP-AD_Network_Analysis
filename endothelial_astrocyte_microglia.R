@@ -128,8 +128,8 @@ png(file='paper_figures/dlpfc_blue_case_control_male.png',height=640,width=1280,
 makeSortedLogFCplot(DLPFCsummaryList[[13]],'DLPFC Blue, Case vs Control in Male',y)
 dev.off()
 
-####CER
-CBEsummary <- dplyr::select(degResultTable$syn8468023,
+####TCX
+TCXsummary <- dplyr::select(degResultTable$syn8468023,
                               Model,
                               BrainRegion.ref,
                               Comparison,
