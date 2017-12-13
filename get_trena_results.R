@@ -38,6 +38,6 @@ bar<-synapser::File('trenaTopDrivers.csv',
                versionComment='top 10 trena drivers for each aggregate module')
 synapser::synStore(bar, 
                    used = 'syn11376251',
-                   executed = '')
+                   executed = permLink)
 
 
