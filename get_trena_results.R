@@ -29,8 +29,8 @@ View(geneListDf)
 
 permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
                                ref = 'branch',
-                               refName = 'module-comparisons',
-                               repositoryPath = 'mayoRNAseq.R')
+                               refName = 'module_ranking',
+                               repositoryPath = 'get_trena_results.R')
 
 #store to synapse
 bar<-synapser::File('trenaTopDrivers.csv',
