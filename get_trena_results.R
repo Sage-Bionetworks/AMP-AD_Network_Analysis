@@ -36,7 +36,7 @@ permLink =githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Ana
 bar<-synapser::File('trenaTopDrivers.csv',
                parentId='syn11376150',
                versionComment='top 10 trena drivers for each aggregate module')
-synapser::synStore(bar, 
+bar <- synapser::synStore(bar, 
                    used = 'syn11376251',
                    executed = permLink)
 
