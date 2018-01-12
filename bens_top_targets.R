@@ -21,15 +21,6 @@ loadBic <- function(synId){
 ampNetworks <- lapply(foo$id,loadBic)
 names(ampNetworks) <- foo$tissueTypeAbrv
 
-names(ampNetworks) <- c('rosmap',
-                        'mayoTcx',
-                        'mayoCer',
-                        'mssmFp',
-                        'mssmStg',
-                        'mssmPhg',
-                        'mssmIfg',
-                        'mcadgsTCX',
-                        'mcadgsCER')
 rownames(foo) <- names(ampNetworks)
 
 
