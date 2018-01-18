@@ -16,8 +16,6 @@ loadBic <- function(synId){
   return(net)
 }
 
-
-
 ampNetworks <- lapply(foo$id,loadBic)
 names(ampNetworks) <- foo$tissueTypeAbrv
 
@@ -27,14 +25,14 @@ rownames(foo) <- names(ampNetworks)
 nedges <- sapply(ampNetworks,function(x) sum(x))
 foo$nedges <- nedges
 
-rm(ampNetworks)
-gc()
+
 networkGraphs <- lapply(ampNetworks,
                         igraph::graph_from_adjacency_matrix,
                         mode='undirected')
 #rosmap <- igraph::graph_from_adjacency_matrix(bicNetworks$network,
 #                                              mode='undirected')
-
+rm(ampNetworks)
+gc()
 
 collateGraphStatistics <- function(graph){
   model <- list()
@@ -97,9 +95,10 @@ adList2 <- list(ad_gwas=adList,
                 dummyList=c('VEGF','APOE'))
 adList2$ad_gwas <- c(adList2$ad_gwas,'ABI3','PLCG2')
 adList2$ad_gwas <- c(adList2$ad_gwas,'SPI1')
+adList2$ad_gwas <- c(adList2$ad_gwas,'ADAM10','ADAMTS4','ACE')
 
-fb<-readLines('ng_gene')
-adList2$ad_gwas <- union(adList2$ad_gwas,fb)
+#fb<-readLines('ng_gene')
+#adList2$ad_gwas <- union(adList2$ad_gwas,fb)
 
 convertAd <- utilityFunctions::convertHgncToEnsembl(adList2$ad_gwas)
 adGene <- networkProperties4$GeneID%in% convertAd$ensembl_gene_id
@@ -151,7 +150,18 @@ combinedFeatureSet2 <- combinedFeatureSet2[,-wZ]
 combinedFeatureSet2 <- scale(combinedFeatureSet2)
 
 res_cf <- apply(combinedFeatureSet2,2,fun,adGene2)
+set.seed(1)
 lasso <- glmnet::cv.glmnet(y=adGene2,x=combinedFeatureSet2,family='binomial')
+betaScore <- lasso$glmnet.fit$beta[,which(lasso$lambda==lasso$lambda.min)]
+score3 <- combinedFeatureSet2[,names(betaScore)]%*%betaScore
+names(score3) <- networkProperties4$GeneID
+score3Df <- data.frame(gene=names(score3),score5=score3,stringsAsFactors = F)
+
+mapTable2 <- utilityFunctions::convertEnsemblToHgnc(score3Df)
+score3Df <- dplyr::left_join(score3Df,mapTable2,by=c('gene'='ensembl_gene_id'))
+score3Df <- dplyr::arrange(score3Df,desc(score5))
+View(score3Df)
+
 #####run analyses
 
 res<-apply(networkProperties6,2,fun,adGene)
