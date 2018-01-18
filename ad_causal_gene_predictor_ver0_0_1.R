@@ -24,7 +24,7 @@ rownames(foo) <- names(ampNetworks)
 
 nedges <- sapply(ampNetworks,function(x) sum(x))
 foo$nedges <- nedges
-
+foo5 <- foo
 
 networkGraphs <- lapply(ampNetworks,
                         igraph::graph_from_adjacency_matrix,
@@ -184,7 +184,7 @@ edgeListObj<-rSynapseUtilities::pushDf2Synapse(df = score3Df,
                                                          'organism' = 'HomoSapiens',
                                                          'summaryLevel' = 'gene'),
                                                comment = 'first version of predicted AD driver score for all genes',
-                                               usedVector = foo$id,
+                                               usedVector = c(foo5$id,'syn5923958','syn10496554'),
                                                executedVector = permLink,
                                                activityName1 = 'AD gene ranking',
                                                activityDescription1 = 'build network and deg features, fit a predictive model of known LOAD genes')
