@@ -58,12 +58,25 @@ gap::qqunif(dplyr::filter(foobar2,pathway=='genecards')$pval,xlim=c(0,5),ylim=c(
 par(new=T)
 gap::qqunif(dplyr::filter(adGeneticsSummaryAgg,GeneSetName=='genecards')$GeneSetAssociationStatistic,xlim=c(0,5),ylim=c(0,42),col='red')
 
+
+
+uniqueMods <- c(CBEres$moduleGraph$from,CBEres$moduleGraph$to)%>% unique
+uniqueMods <- c(DLPFCres$moduleGraph$from,DLPFCres$moduleGraph$to) %>% unique %>% c(uniqueMods)
+uniqueMods <- c(PHGres$moduleGraph$from,PHGres$moduleGraph$to) %>% unique %>% c(uniqueMods)
+uniqueMods <- c(FPres$moduleGraph$from,FPres$moduleGraph$to) %>% unique %>% c(uniqueMods)
+uniqueMods <- c(TCXres$moduleGraph$from,TCXres$moduleGraph$to) %>% unique %>% c(uniqueMods)
+uniqueMods <- c(IFGres$moduleGraph$from,IFGres$moduleGraph$to) %>% unique %>% c(uniqueMods)
+uniqueMods <- c(STGres$moduleGraph$from,STGres$moduleGraph$to) %>% unique %>% c(uniqueMods)
+
+
 gap::qqunif(adGeneticsSummaryInd$GeneSetAssociationStatistic,xlim=c(0,5), ylim=c(0,42))
+par(new=T)
+gap::qqunif(dplyr::filter(adGeneticsSummaryInd,ModuleNameFull %in% uniqueMods)$GeneSetAssociationStatistic,xlim=c(0,5),ylim=c(0,42),col='purple')
 par(new=T)
 gap::qqunif(foobar2$pval,xlim=c(0,5),ylim=c(0,42),col='green')
 par(new=T)
 gap::qqunif(adGeneticsSummaryAgg$GeneSetAssociationStatistic,xlim=c(0,5),ylim=c(0,42),col='red',main='AD Gene-set Enrichments')
-legend('topleft',c('all modules','all DEGs','aggregate modules'),fill=c('blue','green','red'))
+legend('topleft',c('all modules','all DEG enriched modules','all DEGs','aggregate modules'),fill=c('blue','purple','green','red'))
 
 ks.test(adGeneticsSummaryAgg$GeneSetAssociationStatistic,
         foobar2$pval,alternative='greater')

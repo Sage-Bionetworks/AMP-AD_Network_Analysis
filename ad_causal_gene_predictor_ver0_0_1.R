@@ -189,4 +189,14 @@ edgeListObj<-rSynapseUtilities::pushDf2Synapse(df = score3Df,
                                                activityName1 = 'AD gene ranking',
                                                activityDescription1 = 'build network and deg features, fit a predictive model of known LOAD genes')
 
+synapser::synLogin()
+driverScoreObj <- synapser::synGet('syn11688680')
+driverScore<-read.csv(driverScoreObj$path,stringsAsFactors = F)
+
+
+genecardsObj <- synapser::synGet('syn10507702')
+genecards <- data.table::fread(genecardsObj$path,data.table=F)
+
+adList <- list()
+adList$genecards <- genecards$`Gene Symbol`
 

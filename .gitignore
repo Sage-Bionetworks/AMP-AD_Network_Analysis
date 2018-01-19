@@ -102,3 +102,14 @@ ng_gene
 test.out
 modDegree.csv
 adDriverScore.csv
+fp_res.rda
+full_qq_plot.png
+gef.csv
+gef_for_paul.csv
+gtpase.csv
+gtpase_for_paul.csv
+ifg_res.rda
+metanetwork_edges_amp_ad.csv
+phg_res.rda
+stg_res.rda
+tcx_res.rda
