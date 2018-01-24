@@ -42,14 +42,32 @@ mean(log10(adGeneticsSummaryInd$GeneSetEffect))
 agg_pval <- adGeneticsSummaryAgg$GeneSetAssociationStatistic
 ind_pval <- adGeneticsSummaryInd$GeneSetAssociationStatistic
 
-set.seed(1)
-agg_pval[agg_pval==1] <- runif(sum(agg_pval==1))
-ind_pval[ind_pval==1] <- runif(sum(ind_pval==1))
-set.seed(1)
-foobar2$pval[foobar2$pval==1] <- runif(sum(foobar2$pval==1))
+# set.seed(1)
+# agg_pval[agg_pval==1] <- runif(sum(agg_pval==1))
+# ind_pval[ind_pval==1] <- runif(sum(ind_pval==1))
+# set.seed(1)
+# foobar2$pval[foobar2$pval==1] <- runif(sum(foobar2$pval==1))
+# 
+# adGeneticsSummaryAgg$GeneSetAssociationStatistic <- agg_pval
+# adGeneticsSummaryInd$GeneSetAssociationStatistic <- ind_pval
 
-adGeneticsSummaryAgg$GeneSetAssociationStatistic <- agg_pval
-adGeneticsSummaryInd$GeneSetAssociationStatistic <- ind_pval
+gaiteri_mods <- read.csv('zhang_modules.csv',stringsAsFactors=F)
+modList <- lapply(unique(gaiteri_mods$Module), utilityFunctions::listify,gaiteri_mods$Gene_Symbol,gaiteri_mods$Module)
+names(modList) <- unique(gaiteri_mods$Module)
+foobarX <- utilityFunctions::outerSapplyParallel( utilityFunctions::fisherWrapperPval, modList, adList,foo2$external_gene_name)
+
+foobarX <- data.frame(foobarX,stringsAsFactors=F)
+foobarX$pathway <- rownames(foobarX)
+foobarX2<-tidyr::gather(foobarX,key='geneset',value='pval',-pathway)
+
+foobarX3 <- utilityFunctions::outerSapplyParallel( utilityFunctions::fisherWrapperOR, modList, adList,foo2$external_gene_name)
+foobarX3 <- data.frame(foobarX3,stringsAsFactors=F)
+foobarX3$pathway <- rownames(foobarX)
+foobarX4<-tidyr::gather(foobarX3,key='geneset',value='OR',-pathway)
+
+
+
+
 
 
 gap::qqunif(dplyr::filter(adGeneticsSummaryInd,GeneSetName=='genecards')$GeneSetAssociationStatistic,xlim=c(0,5), ylim=c(0,42))
@@ -74,6 +92,8 @@ par(new=T)
 gap::qqunif(dplyr::filter(adGeneticsSummaryInd,ModuleNameFull %in% uniqueMods)$GeneSetAssociationStatistic,xlim=c(0,5),ylim=c(0,42),col='purple')
 par(new=T)
 gap::qqunif(foobar2$pval,xlim=c(0,5),ylim=c(0,42),col='green')
+par(new=T)
+gap::qqunif(foobarX2$pval,xlim=c(0,5),ylim=c(0,42),col='brown')
 par(new=T)
 gap::qqunif(adGeneticsSummaryAgg$GeneSetAssociationStatistic,xlim=c(0,5),ylim=c(0,42),col='red',main='AD Gene-set Enrichments')
 legend('topleft',c('all modules','all DEG enriched modules','all DEGs','aggregate modules'),fill=c('blue','purple','green','red'))
