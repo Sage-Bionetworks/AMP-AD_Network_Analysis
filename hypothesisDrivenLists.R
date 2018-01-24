@@ -26,3 +26,7 @@ colnames(combinedDf) <- c('GeneSet','external_gene','ensembl_gene_id')
 View(combinedDf)
 
 rSynapseUtilities::makeTable(combinedDf,'Hypothesis Specific Gene Sets','syn2370594')
+permLink <- githubr::getPermlink(repository = 'Sage-Bionetworks/AMP-AD_Network_Analysis',
+                                 ref = 'branch',
+                                 refName = 'module_ranking',
+                                 repositoryPath = 'hypothesisDrivenLists.R')
